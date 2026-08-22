@@ -67,18 +67,6 @@ if (recentRe.test(content)) {
   width: 100%;
 }
 
-/* 了解更多 section: the 公众号 QR image goes below the QR grid + QQ群 text */
-.elementor-element-0f13336 {
-  order: 99;
-}
-.elementor-element-0f13336 .elementor-widget-container {
-  text-align: center;
-  margin-top: 24px;
-}
-.elementor-element-ab99211 {
-  width: 100% !important;
-}
-
 /* Stats dark box: stop the first icon from overflowing the box on the left */
 .elementor-section[data-id="bb883c1"] .elementor-container {
   padding-left: 20px;
@@ -86,5 +74,27 @@ if (recentRe.test(content)) {
 }
 .elementor-section[data-id="bb883c1"] .elementor-icon-box-wrapper {
   min-width: 0;
+}
+
+/* 了解更多 QR row: stack vertically on mobile */
+@media (max-width: 767px) {
+  .elementor-element-qrgrid .elementor-column {
+    width: 100% !important;
+  }
+}
+
+/* Tighten the vertical spacing of the main content, hero and footer wrappers */
+#content {
+  padding-top: 30px !important;
+  padding-bottom: 30px !important;
+}
+.sydney-hero-area {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+.sidebar-footer,
+.footer-widgets {
+  padding-top: 20px !important;
+  padding-bottom: 20px !important;
 }
 </style>
