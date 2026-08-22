@@ -36,8 +36,12 @@ const {
     <style is:inline>
       /* Non-home pages: make the transparent Sydney header a solid bar so the nav is visible at the top */
       body:not(.is-home) .site-header {
-        position: static;
-        background-color: #263246;
+        position: static !important;
+        background-color: #263246 !important;
+      }
+      /* Remove the empty hero area left on non-front pages (avoids a stray white block) */
+      body:not(.is-home) .sydney-hero-area {
+        display: none;
       }
     </style>
   </head>
