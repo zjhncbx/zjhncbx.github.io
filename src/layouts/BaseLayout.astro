@@ -48,13 +48,19 @@ const {
 
       /* Adapt the main content to very wide screens so it fills more of the viewport */
       @media (min-width: 1400px) {
-        .container,
+        .container {
+          width: 100% !important;
+          max-width: 1400px !important;
+        }
         .elementor-section.elementor-section-boxed > .elementor-container {
           max-width: 1400px !important;
         }
       }
       @media (min-width: 1700px) {
-        .container,
+        .container {
+          width: 100% !important;
+          max-width: 1600px !important;
+        }
         .elementor-section.elementor-section-boxed > .elementor-container {
           max-width: 1600px !important;
         }
