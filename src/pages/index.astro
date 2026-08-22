@@ -5,7 +5,7 @@ import blocks from '../data/render_blocks.json';
 const footer = blocks.home_footer.replace(/<\/body>\s*<\/html>\s*$/i, '');
 ---
 
-<BaseLayout>
+<BaseLayout bodyClass="is-home">
   <Fragment set:html={blocks.home_header} />
   <Fragment set:html={blocks.home_hero} />
   <Fragment set:html={blocks.home_content} />

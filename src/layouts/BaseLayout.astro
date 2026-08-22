@@ -7,12 +7,14 @@ interface Props {
   title?: string;
   description?: string;
   styles?: string[];
+  bodyClass?: string;
 }
 
 const {
   title = '潮百相公益',
   description = '兴趣公益与社会创新的领导者',
   styles = [],
+  bodyClass = '',
 } = Astro.props;
 ---
 
@@ -31,8 +33,15 @@ const {
       <link rel="stylesheet" href={href} />
     ))}
     <link rel="stylesheet" href="/assets/inline.css" />
+    <style is:inline>
+      /* Non-home pages: make the transparent Sydney header a solid bar so the nav is visible at the top */
+      body:not(.is-home) .site-header {
+        position: static;
+        background-color: #263246;
+      }
+    </style>
   </head>
-  <body>
+  <body class={bodyClass}>
     <slot />
   </body>
 </html>
