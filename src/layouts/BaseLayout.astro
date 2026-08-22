@@ -34,14 +34,53 @@ const {
     ))}
     <link rel="stylesheet" href="/assets/inline.css" />
     <style is:inline>
-      /* Non-home pages: make the transparent Sydney header a solid bar so the nav is visible at the top */
+      /* Non-home pages: the navbar must sit at the very top (no white bar above it) and be solid */
       body:not(.is-home) .site-header {
         position: static !important;
+        top: 0 !important;
         background-color: #263246 !important;
       }
-      /* Remove the empty hero area left on non-front pages (avoids a stray white block) */
-      body:not(.is-home) .sydney-hero-area {
+      body:not(.is-home) .header-clone,
+      body:not(.is-home) .sydney-hero-area,
+      body:not(.is-home) .header-image {
         display: none;
+      }
+
+      /* Adapt the main content to very wide screens so it fills more of the viewport */
+      @media (min-width: 1400px) {
+        .container,
+        .elementor-section.elementor-section-boxed > .elementor-container {
+          max-width: 1400px !important;
+        }
+      }
+      @media (min-width: 1700px) {
+        .container,
+        .elementor-section.elementor-section-boxed > .elementor-container {
+          max-width: 1600px !important;
+        }
+      }
+
+      /* Mobile: keep the hero a reasonable height and reduce oversized type */
+      @media (max-width: 767px) {
+        .sydney-hero-area,
+        #slideshow.header-slider,
+        #slideshow .slides-container,
+        #slideshow .slides-container .slide-item {
+          height: 60vh !important;
+          min-height: 380px;
+        }
+        #slideshow .text-slider .maintitle {
+          font-size: 26px !important;
+          line-height: 1.25 !important;
+        }
+        #slideshow .text-slider .subtitle {
+          font-size: 15px !important;
+          line-height: 1.4 !important;
+          padding: 10px 0 24px !important;
+        }
+        #slideshow .slide-inner .contain {
+          padding: 0 16px;
+        }
       }
     </style>
   </head>
