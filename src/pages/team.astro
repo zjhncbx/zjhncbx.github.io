@@ -1,0 +1,17 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import assetsData from '../data/assets.json';
+import livepages from '../data/livepages.json';
+
+const page = livepages.team;
+const globalCss = new Set(assetsData.css);
+const extraCss = page.css.filter((c) => !globalCss.has(c));
+---
+
+<BaseLayout
+  title="团队介绍 | 潮百相公益"
+  description="海宁市潮百相公益发展协会团队介绍"
+  styles={extraCss}
+>
+  <Fragment set:html={page.body} />
+</BaseLayout>

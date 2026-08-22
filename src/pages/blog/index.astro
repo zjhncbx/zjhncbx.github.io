@@ -1,0 +1,58 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import livepages from '../../data/livepages.json';
+import postsData from '../../data/posts.json';
+
+const shell = livepages.blog;
+const posts = postsData
+  .filter((p) => p.status === 'publish' && p.title)
+  .sort((a, b) => (a.date > b.date ? -1 : 1));
+
+const strip = (html) => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+
+const fmtDate = (d) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d || '');
+  return m ? `${m[1]}年${+m[2]}月${+m[3]}日` : d;
+};
+---
+
+<BaseLayout title="新闻通告 | 潮百相公益" description="潮百相公益新闻与通告">
+  <Fragment set:html={shell.header} />
+  <div id="content" class="page-wrap">
+    <div class="content-wrapper container">
+      <div class="row">
+        <div id="primary" class="content-area col-md-12">
+          <main id="main" class="post-wrap" role="main">
+            <div class="posts-layout">
+              <div class="row">
+                {posts.map((p) => (
+                  <article class="post col-md-12 post-align-left">
+                    <div class="content-inner">
+                      <div class="entry-meta above-title delimiter-dot">
+                        <span class="posted-on">
+                          <time class="entry-date published updated" datetime={p.date}>{fmtDate(p.date)}</time>
+                        </span>
+                        {p.categories.length > 0 && (
+                          <span class="cat-links">{p.categories.join(' / ')}</span>
+                        )}
+                      </div>
+                      <header class="entry-header">
+                        <h2 class="title-post entry-title">
+                          <a href={`/blog/${p.id}/`}>{p.title}</a>
+                        </h2>
+                      </header>
+                      <div class="entry-post">
+                        <p>{strip(p.excerpt || p.content).slice(0, 140)}</p>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    </div>
+  </div>
+  <Fragment set:html={shell.footer} />
+</BaseLayout>

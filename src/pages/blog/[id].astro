@@ -1,0 +1,50 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import livepages from '../../data/livepages.json';
+import postsData from '../../data/posts.json';
+
+export function getStaticPaths() {
+  return postsData.map((p) => ({ params: { id: String(p.id) } }));
+}
+
+const shell = livepages.blog;
+const post = postsData.find((p) => String(p.id) === Astro.params.id);
+
+const fmtDate = (d) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d || '');
+  return m ? `${m[1]}年${+m[2]}月${+m[3]}日` : d;
+};
+---
+
+<BaseLayout title={`${post?.title ?? '文章'} | 潮百相公益`} description="潮百相公益">
+  <Fragment set:html={shell.header} />
+  <div id="content" class="page-wrap">
+    <div class="content-wrapper container">
+      <div class="row">
+        <div id="primary" class="content-area col-md-12">
+          <main id="main" class="post-wrap" role="main">
+            <article id={`post-${post?.id}`} class="post type-post status-publish post-align-left">
+              <div class="content-inner">
+                <div class="entry-meta above-title delimiter-dot">
+                  <span class="posted-on">
+                    <time class="entry-date published updated" datetime={post?.date}>{fmtDate(post?.date)}</time>
+                  </span>
+                  {post && post.categories.length > 0 && (
+                    <span class="cat-links">{post.categories.join(' / ')}</span>
+                  )}
+                </div>
+                <header class="entry-header">
+                  <h1 class="title-post entry-title">{post?.title}</h1>
+                </header>
+                <div class="entry-content">
+                  {post && <Fragment set:html={post.content} />}
+                </div>
+              </div>
+            </article>
+          </main>
+        </div>
+      </div>
+    </div>
+  </div>
+  <Fragment set:html={shell.footer} />
+</BaseLayout>

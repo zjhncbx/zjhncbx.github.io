@@ -1,0 +1,17 @@
+# dependencies & build output
+node_modules/
+dist/
+.astro/
+
+# logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# local helper / scratch
+_migrate_tmp/
+
+# keep the source DB dump out of the repo (user data backup)
+wordpress_2026-08-22_19-41-35_mysql_data_c3zlC.sql
