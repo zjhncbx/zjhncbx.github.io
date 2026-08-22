@@ -28,6 +28,13 @@ const fmtDate = (d) => {
                 {posts.map((p) => (
                   <article class="post col-md-12 post-align-left">
                     <div class="content-inner">
+                      {p.thumb && (
+                        <div class="post-thumbnail">
+                          <a href={`/blog/${p.id}/`}>
+                            <img src={p.thumb} alt={p.title} loading="lazy" />
+                          </a>
+                        </div>
+                      )}
                       <div class="entry-meta above-title delimiter-dot">
                         <span class="posted-on">
                           <time class="entry-date published updated" datetime={p.date}>{fmtDate(p.date)}</time>

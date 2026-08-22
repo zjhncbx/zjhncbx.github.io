@@ -11,3 +11,34 @@ const footer = blocks.home_footer.replace(/<\/body>\s*<\/html>\s*$/i, '');
   <Fragment set:html={blocks.home_content} />
   <Fragment set:html={footer} />
 </BaseLayout>
+
+<style is:inline>
+/* Make the Sydney hero slider render full-height even without the JS slider plugin */
+.sydney-hero-area,
+#slideshow.header-slider {
+  height: 100vh !important;
+  min-height: 480px;
+}
+#slideshow.header-slider .slides-container,
+#slideshow.header-slider .slides-container .slide-item {
+  height: 100vh !important;
+  min-height: 480px;
+}
+#slideshow .slide-item {
+  background-position: center center !important;
+  background-size: cover !important;
+}
+#slideshow img.mobile-slide {
+  display: none;
+}
+#slideshow .slide-inner {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  text-align: center;
+  z-index: 2;
+  width: 100%;
+}
+</style>

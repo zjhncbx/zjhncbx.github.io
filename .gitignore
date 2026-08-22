@@ -15,3 +15,8 @@ _migrate_tmp/
 
 # keep the source DB dump out of the repo (user data backup)
 wordpress_2026-08-22_19-41-35_mysql_data_c3zlC.sql
+
+# local scratch / backup extraction (not part of the site)
+_cmp/
+_backup_extract/
+cmp_profile/

@@ -25,6 +25,11 @@ const fmtDate = (d) => {
           <main id="main" class="post-wrap" role="main">
             <article id={`post-${post?.id}`} class="post type-post status-publish post-align-left">
               <div class="content-inner">
+                {post && post.thumb && (
+                  <div class="post-thumbnail">
+                    <img src={post.thumb} alt={post.title} />
+                  </div>
+                )}
                 <div class="entry-meta above-title delimiter-dot">
                   <span class="posted-on">
                     <time class="entry-date published updated" datetime={post?.date}>{fmtDate(post?.date)}</time>
