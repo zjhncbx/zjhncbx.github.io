@@ -17,8 +17,8 @@ const fmtDate = (d: string | undefined) => {
 };
 
 const isoDate = (d: string | undefined) => (d ? String(d).slice(0, 10) : '');
-// first image url in content for og:image
-const firstImage = post ? (/src="([^"]+)"/.exec(post?.content || '') || [])[1] : '';
+// first image url in content for og:image (prefer the post thumbnail when present)
+const firstImage = post && (post.thumb || (/src="([^"]+)"/.exec(post?.content || '') || [])[1]);
 const base = 'https://www.hncbx.org.cn';
 const canonical = post ? `${base}/blog/${post.id}/` : base;
 const ogImage = firstImage ? (firstImage.startsWith('http') ? firstImage : base + firstImage) : undefined;

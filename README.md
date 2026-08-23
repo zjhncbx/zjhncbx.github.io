@@ -23,6 +23,9 @@ npm run images:optimize  # 静态 jpg/png -> webp 副本
 npm run images:gif       # 动态 gif -> 动画 webp 副本
 npm run images:thumbs    # 新闻列表缩略图 480px
 npm run images:report    # 前后对比
+
+# 微信公众号历史文章迁移（--all / --article N / --resume / --dry-run）
+npm run wechat:import    # node scripts/import-wechat-articles.mjs --all
 ```
 
 ## 部署
@@ -47,6 +50,23 @@ npm run images:report    # 前后对比
 - 首页 Hero：WebP + `eager` + `fetchpriority="high"`，并提供移动 768w 变体。
 - 图片 WebP 映射按**相对上传路径**匹配（避免不同目录同名文件冲突）。
 
+## 微信公众号文章归档
+
+微信公众号历史文章迁移至官网时：
+
+- 保留原始发布日期；
+- 正文图片本地化；
+- 图片按现有优化机制处理；
+- 普通可获取视频本地化；
+- 视频号保留封面、标题、账号及原始入口；
+- 不绕过微信平台鉴权；
+- 所有内容使用官网正式 URL。
+
+迁移由 `scripts/import-wechat-articles.mjs` 执行（`npm run wechat:import`），统一媒体展示使用
+`src/components/VideoEmbed.astro`。文章写入 `src/data/posts.json`（`sourcePlatform: 'wechat'`），
+自动参与首页「近期资讯」按实际发布日期排序与 sitemap 生成。迁移清单见
+[`docs/wechat-import-2026-08.md`](docs/wechat-import-2026-08.md)。
+
 ## 图片优化（P1）
 
 网站图片（大量来自 WordPress 文章正文）通过 `scripts/optimize-images.mjs` 批量生成 `.webp` 副本，
@@ -63,6 +83,7 @@ npm run images:report    # 前后对比
 - [`docs/P0-optimization-report.md`](docs/P0-optimization-report.md)：P0 阶段性能 / 图片 / SEO 优化报告。
 - [`docs/P1-image-optimization-report.md`](docs/P1-image-optimization-report.md)：P1 图片性能优化报告与 P2 建议。
 - [`docs/P2-responsive-performance-report.md`](docs/P2-responsive-performance-report.md)：P2 响应式布局 / Hero / srcset / 性能报告与 P3 建议。
+- [`docs/wechat-import-2026-08.md`](docs/wechat-import-2026-08.md)：微信公众号历史文章完整迁移清单与核验结果。
 
 ## 目录结构
 
