@@ -1,5 +1,6 @@
 ---
 import assetsData from '../data/assets.json';
+import SEO from '../components/seo/SEO.astro';
 
 const assets = assetsData;
 
@@ -8,6 +9,17 @@ interface Props {
   description?: string;
   styles?: string[];
   bodyClass?: string;
+  seo?: {
+    title?: string;
+    description?: string;
+    canonical?: string;
+    ogImage?: string;
+    ogType?: string;
+    article?: boolean;
+    publishedTime?: string;
+    modifiedTime?: string;
+    organization?: boolean;
+  };
 }
 
 const {
@@ -15,6 +27,7 @@ const {
   description = '海宁市潮百相公益发展协会官网',
   styles = [],
   bodyClass = '',
+  seo = {},
 } = Astro.props;
 ---
 
@@ -23,8 +36,17 @@ const {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title}</title>
-    <meta name="description" content={description} />
+    <SEO
+      title={seo.title ?? title}
+      description={seo.description ?? description}
+      canonical={seo.canonical}
+      ogImage={seo.ogImage}
+      ogType={seo.ogType}
+      article={seo.article}
+      publishedTime={seo.publishedTime}
+      modifiedTime={seo.modifiedTime}
+      organization={seo.organization}
+    />
     <link rel="icon" type="image/jpeg" href="/wp-content/uploads/2020/10/加字圆形logo.jpg" />
     {assets.css.map((href) => (
       <link rel="stylesheet" href={href} />

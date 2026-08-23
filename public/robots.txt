@@ -1,3 +1,4 @@
 User-agent: *
 Allow: /
-Sitemap: https://zjhncbx.github.io/sitemap.xml
+
+Sitemap: https://www.hncbx.org.cn/sitemap.xml

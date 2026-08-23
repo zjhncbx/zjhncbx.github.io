@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import livepages from '../../data/livepages.json';
 import postsData from '../../data/posts.json';
+import { lazyImages } from '../../lib/lazy';
 
 export function getStaticPaths() {
   return postsData.map((p) => ({ params: { id: String(p.id) } }));
@@ -10,13 +11,33 @@ export function getStaticPaths() {
 const shell = livepages.blog;
 const post = postsData.find((p) => String(p.id) === Astro.params.id);
 
-const fmtDate = (d) => {
+const fmtDate = (d: string | undefined) => {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d || '');
   return m ? `${m[1]}年${+m[2]}月${+m[3]}日` : d;
 };
+
+const isoDate = (d: string | undefined) => (d ? String(d).slice(0, 10) : '');
+// first image url in content for og:image
+const firstImage = post ? (/src="([^"]+)"/.exec(post?.content || '') || [])[1] : '';
+const base = 'https://www.hncbx.org.cn';
+const canonical = post ? `${base}/blog/${post.id}/` : base;
+const ogImage = firstImage ? (firstImage.startsWith('http') ? firstImage : base + firstImage) : undefined;
 ---
 
-<BaseLayout title={`${post?.title ?? '文章'} | 潮百相公益——兴趣公益与社会创新的领导者`} description="潮百相公益">
+<BaseLayout
+  title={`${post?.title ?? '文章'} | 潮百相公益——兴趣公益与社会创新的领导者`}
+  description={(post?.excerpt || post?.content || '').replace(/<[^>]+>/g, ' ').trim().slice(0, 160)}
+  seo={{
+    title: `${post?.title ?? '文章'} | 潮百相公益——兴趣公益与社会创新的领导者`,
+    description: (post?.excerpt || post?.content || '').replace(/<[^>]+>/g, ' ').trim().slice(0, 160),
+    canonical,
+    ogImage,
+    ogType: 'article',
+    article: true,
+    publishedTime: isoDate(post?.date),
+    modifiedTime: isoDate(post?.modified ?? post?.date),
+  }}
+>
   <Fragment set:html={shell.header} />
   <div id="content" class="page-wrap">
     <div class="content-wrapper container">
@@ -42,7 +63,7 @@ const fmtDate = (d) => {
                   <h1 class="title-post entry-title">{post?.title}</h1>
                 </header>
                 <div class="entry-content">
-                  {post && <Fragment set:html={post.content} />}
+                  {post && <Fragment set:html={lazyImages(post.content)} />}
                 </div>
               </div>
             </article>

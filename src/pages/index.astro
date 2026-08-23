@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import blocks from '../data/render_blocks.json';
 import postsData from '../data/posts.json';
+import { lazyImages } from '../lib/lazy';
 
 const footer = blocks.home_footer.replace(/<\/body>\s*<\/html>\s*$/i, '');
 
@@ -11,7 +12,7 @@ const latest = postsData
   .sort((a, b) => (a.date > b.date ? -1 : a.date < b.date ? 1 : 0))
   .slice(0, 10);
 
-const esc = (s) =>
+const esc = (s: string) =>
   String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 const recentItems = latest
@@ -23,12 +24,22 @@ const recentRe = /(<h5>近期资讯<\/h5>[^\n]*\s*<ul>)[\s\S]*?(<\/ul>)/;
 if (recentRe.test(content)) {
   content = content.replace(recentRe, (_m, pre, post) => pre + recentItems + post);
 }
+
+const base = 'https://www.hncbx.org.cn';
 ---
 
-<BaseLayout bodyClass="is-home">
+<BaseLayout
+  bodyClass="is-home"
+  seo={{
+    title: '潮百相公益——兴趣公益与社会创新的领导者',
+    description: '海宁市潮百相公益发展协会官网：兴趣公益与社会创新的领导者，提供志愿公益、青年团建、语言文化、公共交通等公益项目资讯。',
+    canonical: `${base}/`,
+    organization: true,
+  }}
+>
   <Fragment set:html={blocks.home_header} />
   <Fragment set:html={blocks.home_hero} />
-  <Fragment set:html={content} />
+  <Fragment set:html={lazyImages(content)} />
   <Fragment set:html={footer} />
 </BaseLayout>
 

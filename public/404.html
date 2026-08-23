@@ -1,26 +1,47 @@
 <!doctype html>
-<html>
+<html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>404</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>404 · 页面未找到 | 潮百相公益</title>
 <style>
-	body{
-		background-color:#444;
-		font-size:14px;
-	}
-	h3{
-		font-size:60px;
-		color:#eee;
-		text-align:center;
-		padding-top:30px;
-		font-weight:normal;
-	}
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background-color: #263246;
+    font-family: "Raleway", "Microsoft YaHei", sans-serif;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+  .wrap { text-align: center; padding: 40px 24px; }
+  .code { font-size: 88px; font-weight: 800; line-height: 1; color: #d83a3a; }
+  .msg { font-size: 22px; margin: 18px 0 8px; }
+  .sub { font-size: 15px; color: #cfd4e0; margin-bottom: 32px; }
+  a.btn {
+    display: inline-block;
+    background-color: #d83a3a;
+    color: #fff;
+    text-decoration: none;
+    padding: 12px 28px;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+  a.btn:hover { background-color: #b52f2f; }
+  a.link { color: #cfd4e0; display: inline-block; margin-top: 18px; font-size: 14px; }
+  a.link:hover { color: #fff; }
 </style>
 </head>
-
 <body>
-<h3>404，您请求的文件不存在!</h3>
+  <div class="wrap">
+    <div class="code">404</div>
+    <p class="msg">页面未找到</p>
+    <p class="sub">您访问的页面可能已被移除或地址有误。</p>
+    <a class="btn" href="/">返回首页</a><br>
+    <a class="link" href="/blog/">查看新闻通告</a>
+  </div>
 </body>
 </html>

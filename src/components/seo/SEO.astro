@@ -1,0 +1,83 @@
+---
+/**
+ * SEO component (P0-06). Renders document title, meta description, canonical,
+ * and Open Graph / Twitter card tags. For use on every page (home, pages, posts).
+ * Posts additionally emit Article JSON-LD; the homepage emits Organization JSON-LD.
+ */
+export interface Props {
+  title?: string;
+  description?: string;
+  canonical?: string;       // absolute canonical URL
+  ogImage?: string;         // absolute image URL (og:image / twitter:image)
+  ogType?: string;          // default "website"; posts use "article"
+  article?: boolean;        // emit Article JSON-LD
+  publishedTime?: string;
+  modifiedTime?: string;
+  organization?: boolean;   // emit Organization JSON-LD (homepage)
+}
+
+const base = 'https://www.hncbx.org.cn';
+const {
+  title = '潮百相公益——兴趣公益与社会创新的领导者',
+  description = '海宁市潮百相公益发展协会官网',
+  canonical = base + Astro.url.pathname,
+  ogImage = base + '/wp-content/uploads/2020/10/加字圆形logo.jpg',
+  ogType = 'website',
+  article = false,
+  publishedTime = '',
+  modifiedTime = '',
+  organization = false,
+} = Astro.props;
+
+const siteName = '潮百相公益';
+---
+
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+
+<meta property="og:site_name" content={siteName} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:type" content={ogType} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={ogImage} />
+<meta property="og:locale" content="zh_CN" />
+
+{ogType === 'article' && (
+  <>
+    {publishedTime && <meta property="article:published_time" content={publishedTime} />}
+    {modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}
+  </>
+)}
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImage} />
+
+{(article && publishedTime) && (
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    headline: title,
+    description,
+    image: [ogImage],
+    datePublished: publishedTime,
+    dateModified: modifiedTime || publishedTime,
+    author: { '@type': 'Organization', name: siteName },
+    publisher: { '@type': 'Organization', name: siteName, logo: { '@type': 'ImageObject', url: ogImage } },
+    mainEntityOfPage: canonical,
+  })} />
+)}
+
+{organization && (
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: '海宁市潮百相公益发展协会',
+    url: base,
+    logo: ogImage,
+    sameAs: ['https://www.hncbx.org.cn'],
+  })} />
+)}
