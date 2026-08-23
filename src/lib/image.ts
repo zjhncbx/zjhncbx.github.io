@@ -67,7 +67,10 @@ export function webpImages(html: string): string {
     const webpRel = webpTwinFor(rel);
     if (webpRel) {
       const webp = '/wp-content/uploads/' + webpRel;
-      const inner = tag;
+      // Option C (P3): when a .webp twin exists, serve WebP directly. The original file
+      // is kept in the repo (archive) but is no longer referenced by body content, so it
+      // can be pruned from the published dist to stay under the GitHub Pages size limit.
+      const inner = tag.replace(/src="[^"]*"/, `src="${webp}"`);
       return `<picture><source srcset="${webp}" type="image/webp">${inner}</picture>`;
     }
     return tag;

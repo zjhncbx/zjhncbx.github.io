@@ -14,6 +14,7 @@
 npm install
 npm run dev            # 开发服务器
 npm run build          # 构建到 dist/
+npm run build:prune    # 构建 + 移除 dist 中无引用且带 WebP 孪生的原图（发布体积瘦身，CI 使用）
 npm run check          # Astro 类型检查（CI 构建门禁）
 npm run preview        # 预览构建产物
 
@@ -73,6 +74,8 @@ npm run wechat:import    # node scripts/import-wechat-articles.mjs --all
 渲染层用 `<picture>` 优先加载 WebP，支持 WebP 的浏览器下载更小体积，其余回退原图。
 
 > 说明：为保留历史 `/wp-content/uploads/...` URL 与动画，**不删除任何原图**；WebP 副本与原图并存。
+>
+> **P3 体积治理（已执行）**：发布层对带 WebP 孪生的图片只输出 WebP；`build:prune` 在构建后从 `dist` 移除无引用且带孪生的原图（原图仍保留于仓库）；对 SHA-256 相同的历史图片做了统一去重，把 `dist` 由 ~1013 MB 降到 **295 MB**、`public` 由 ~997 MB 降到 **678 MB**。详见 [`docs/P3-size-optimization-report.md`](docs/P3-size-optimization-report.md)。
 > ⚠️ 站点体积已接近 GitHub Pages ~1GB 上限（历史原图 + WebP 孪生），后续建议将图片迁对象存储/CDN 或 Git LFS。
 
 ## 优化文档
