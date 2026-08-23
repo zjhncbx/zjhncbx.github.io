@@ -1,0 +1,60 @@
+---
+// Unified media embed component for wechat-migrated content (task-book §10).
+//
+// The WordPress → Astro body is a raw HTML string (set:html), so imported article
+// bodies emit the SAME markup as this component via scripts/import-wechat-articles.mjs.
+// Use this component directly in .astro pages when you need a single reusable card.
+interface Props {
+  // 'channel'    -> 微信视频号: cover + title + account + original entry (cannot legally embed)
+  // 'video'      -> 微信普通视频(protected): cover + title + account + original entry
+  // 'html5'      -> a plain <video> source (src)
+  // 'tencent'    -> 腾讯视频 iframe embed (src = https://v.qq.com/txp/iframe/player.html?...)
+  // 'external'   -> any external iframe embed (src)
+  type: 'channel' | 'video' | 'html5' | 'tencent' | 'external';
+  cover?: string;
+  title?: string;
+  account?: string;
+  src?: string;
+  href?: string;
+  poster?: string;
+}
+
+const { type, cover = '', title = '', account = '', src = '', href = '', poster } = Astro.props;
+
+const entryHref = href || src;
+const safeTitle = title || '视频';
+---
+{type === 'channel' || type === 'video' ? (
+  <div class="wechat-video-card">
+    <a class="wechat-video-card__link" href={entryHref} target="_blank" rel="noopener">
+      <span class="wechat-video-card__cover">
+        {cover && <img src={cover} alt={safeTitle} loading="lazy" decoding="async" />}
+        <span class="wechat-video-card__play">▶</span>
+      </span>
+      <span class="wechat-video-card__meta">
+        <strong>{safeTitle}</strong>
+        <span class="wechat-video-card__acct">{account ? `${account} · 视频` : '视频'}</span>
+        <span class="wechat-video-card__cta">查看原视频 →</span>
+      </span>
+    </a>
+  </div>
+) : type === 'html5' ? (
+  <div class="wechat-video-frame">
+    <video src={src} poster={poster} controls preload="none" playsinline></video>
+  </div>
+) : type === 'tencent' ? (
+  <div class="wechat-video-frame">
+    <iframe
+      src={src}
+      title={safeTitle}
+      loading="lazy"
+      allowfullscreen
+      allow="autoplay; encrypted-media"
+      frameborder="0"
+    ></iframe>
+  </div>
+) : (
+  <div class="wechat-video-frame">
+    <iframe src={src} title={safeTitle} loading="lazy" allowfullscreen allow="autoplay; encrypted-media" frameborder="0"></iframe>
+  </div>
+)}

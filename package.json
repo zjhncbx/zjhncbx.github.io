@@ -13,7 +13,8 @@
     "images:optimize": "node scripts/optimize-images.mjs optimize",
     "images:gif": "node scripts/optimize-images.mjs gif-optimize",
     "images:thumbs": "node scripts/make-thumbnails.mjs",
-    "images:report": "node scripts/optimize-images.mjs report"
+    "images:report": "node scripts/optimize-images.mjs report",
+    "wechat:import": "node scripts/import-wechat-articles.mjs --all"
   },
   "dependencies": {
     "astro": "^7.2.4"
