@@ -90,6 +90,55 @@ const {
         }
       }
 
+      /* Footer: keep content centered & full-width, no left-shift on wide screens.
+         The migrated footer uses a Bootstrap .row/.col-md-6 split with an empty
+         second column and a nested .site-info.container; we neutralize those so the
+         credits span the whole (centered) container and stay centered at 375–2560px. */
+      .site-footer,
+      #colophon {
+        width: 100%;
+      }
+      .site-footer > .container,
+      #colophon > .container {
+        width: 100% !important;
+        margin-inline: auto !important;
+      }
+      .site-footer .site-info,
+      #colophon .site-info {
+        width: 100%;
+        text-align: center;
+      }
+      .site-footer .sydney-credits,
+      #colophon .sydney-credits {
+        text-align: center;
+        width: 100%;
+      }
+      /* neutralize the empty right column + nested container from the migrated markup */
+      .site-footer .row,
+      #colophon .row {
+        width: 100%;
+        margin: 0;
+      }
+      .site-footer .col-md-6,
+      #colophon .col-md-6 {
+        width: 100% !important;
+        float: none !important;
+        padding: 0 !important;
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+      }
+      .site-footer .site-info.container,
+      #colophon .site-info.container {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .site-footer .site-info.container + *,
+      #colophon .site-info.container + * {
+        clear: both;
+      }
+
       /* Mobile: keep the hero a reasonable height and reduce oversized type */
       @media (max-width: 767px) {
         .sydney-hero-area,

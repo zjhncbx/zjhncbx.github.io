@@ -1,0 +1,52 @@
+---
+/**
+ * ResponsiveImage — unified image component (P2-06).
+ *
+ * Renders a <picture> with a WebP <source> (preferred by modern browsers) plus an
+ * <img> fallback to the original format. Optionally emits loading/decoding/fetchpriority
+ * and explicit dimensions so the browser renders the correct-size asset and avoids CLS.
+ *
+ * Note (P2): because the site is at the GitHub Pages ~1GB size limit, only a single
+ * full-size WebP twin is used (plus dedicated news-list -480.webp thumbs). Multi-width
+ * body srcset/sizes is deferred to P3 (would require originals offloaded to object storage).
+ */
+interface Props {
+  src: string;                 // original /wp-content/uploads/... url (jpg/png/gif)
+  alt: string;
+  class?: string;
+  width?: number;
+  height?: number;
+  loading?: 'lazy' | 'eager';
+  decoding?: 'async' | 'sync' | 'auto';
+  fetchpriority?: 'high' | 'low' | 'auto';
+  webpSrc?: string;            // explicit webp twin; defaults to <same-stem>.webp
+}
+
+const {
+  src,
+  alt,
+  class: cls = '',
+  width,
+  height,
+  loading = 'lazy',
+  decoding = 'async',
+  fetchpriority,
+  webpSrc,
+} = Astro.props;
+
+// webp twin for jpg/jpeg/png/gif (same stem, .webp); override for sized variants
+const webp = webpSrc || src.replace(/\.(jpe?g|png|gif)$/i, '.webp');
+---
+<picture>
+  <source srcset={webp} type="image/webp" />
+  <img
+    src={src}
+    alt={alt}
+    loading={loading}
+    decoding={decoding}
+    width={width}
+    height={height}
+    fetchpriority={fetchpriority}
+    class={cls || undefined}
+  />
+</picture>

@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import livepages from '../../data/livepages.json';
 import postsData from '../../data/posts.json';
+import ResponsiveImage from '../../components/ResponsiveImage.astro';
 
 const shell = livepages.blog;
 const posts = postsData
@@ -37,10 +38,7 @@ const base = 'https://www.hncbx.org.cn';
                       {p.thumb && (
                         <div class="post-thumbnail">
                           <a href={`/blog/${p.id}/`}>
-                            <picture>
-                              <source srcset={p.thumb.replace(/\.(jpe?g|png)$/i, '-480.webp')} type="image/webp" />
-                              <img src={p.thumb} alt={p.title} loading="lazy" decoding="async" width="480" height="300" />
-                            </picture>
+                            <ResponsiveImage src={p.thumb} alt={p.title} width={480} height={300} loading="lazy" webpSrc={p.thumb.replace(/\.(jpe?g|png)$/i, '-480.webp')} />
                           </a>
                         </div>
                       )}
