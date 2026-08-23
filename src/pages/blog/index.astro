@@ -37,7 +37,10 @@ const base = 'https://www.hncbx.org.cn';
                       {p.thumb && (
                         <div class="post-thumbnail">
                           <a href={`/blog/${p.id}/`}>
-                            <img src={p.thumb} alt={p.title} loading="lazy" />
+                            <picture>
+                              <source srcset={p.thumb.replace(/\.(jpe?g|png)$/i, '-480.webp')} type="image/webp" />
+                              <img src={p.thumb} alt={p.title} loading="lazy" decoding="async" width="480" height="300" />
+                            </picture>
                           </a>
                         </div>
                       )}

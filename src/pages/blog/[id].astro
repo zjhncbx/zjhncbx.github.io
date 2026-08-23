@@ -2,7 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import livepages from '../../data/livepages.json';
 import postsData from '../../data/posts.json';
-import { lazyImages } from '../../lib/lazy';
+import { imagePipeline } from '../../lib/image';
 
 export function getStaticPaths() {
   return postsData.map((p) => ({ params: { id: String(p.id) } }));
@@ -63,7 +63,7 @@ const ogImage = firstImage ? (firstImage.startsWith('http') ? firstImage : base 
                   <h1 class="title-post entry-title">{post?.title}</h1>
                 </header>
                 <div class="entry-content">
-                  {post && <Fragment set:html={lazyImages(post.content)} />}
+                  {post && <Fragment set:html={imagePipeline(post.content)} />}
                 </div>
               </div>
             </article>

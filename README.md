@@ -12,10 +12,17 @@
 
 ```bash
 npm install
-npm run dev      # 开发服务器
-npm run build    # 构建到 dist/
-npm run check    # Astro 类型检查（CI 构建门禁）
-npm run preview  # 预览构建产物
+npm run dev            # 开发服务器
+npm run build          # 构建到 dist/
+npm run check          # Astro 类型检查（CI 构建门禁）
+npm run preview        # 预览构建产物
+
+# 图片优化（只生成 WebP 副本，不删除原图）
+npm run images:audit     # 只读统计
+npm run images:optimize  # 静态 jpg/png -> webp 副本
+npm run images:gif       # 动态 gif -> 动画 webp 副本
+npm run images:thumbs    # 新闻列表缩略图 480px
+npm run images:report    # 前后对比
 ```
 
 ## 部署
@@ -31,19 +38,30 @@ npm run preview  # 预览构建产物
 - `src/pages/sitemap.xml.ts`：根据实际路由自动生成的 XML sitemap（含文章 lastmod）。
 - `public/robots.txt`：允许全站抓取，sitemap 指向 canonical 域名。
 - `public/404.html`：统一视觉的 404 页，含返回首页入口。
-- `src/lib/lazy.ts`：为正文大图追加 `loading="lazy"`，首屏 Hero / Logo 保持 eager。
+- `src/lib/image.ts`：图片渲染管线——为正文大图追加 `loading="lazy"`、并用 `<picture>` 优先加载 WebP（首屏 Hero / Logo 保持 eager），历史原图 URL 作为回退保留。
+
+## 图片优化（P1）
+
+网站图片（大量来自 WordPress 文章正文）通过 `scripts/optimize-images.mjs` 批量生成 `.webp` 副本，
+渲染层用 `<picture>` 优先加载 WebP，支持 WebP 的浏览器下载更小体积，其余回退原图。
+
+> 说明：为保留历史 `/wp-content/uploads/...` URL 与动画，**不删除任何原图**；WebP 副本与原图并存。
 
 ## 优化文档
 
 - [`docs/resource-audit.md`](docs/resource-audit.md)：资源依赖审计（CSS / JS / 图片，含引用关系与可删性结论）。
-- [`docs/P0-optimization-report.md`](docs/P0-optimization-report.md)：P0 阶段性能 / 图片 / SEO 优化报告与 P1 建议。
+- [`docs/image-audit.md`](docs/image-audit.md)：图片审计（规模、体积分档、引用、分类、优化结果）。
+- [`docs/gif-audit.md`](docs/gif-audit.md)：GIF 专项审计（动态 GIF 分类与动画 WebP 处理）。
+- [`docs/P0-optimization-report.md`](docs/P0-optimization-report.md)：P0 阶段性能 / 图片 / SEO 优化报告。
+- [`docs/P1-image-optimization-report.md`](docs/P1-image-optimization-report.md)：P1 图片性能优化报告与 P2 建议。
 
 ## 目录结构
 
 - `src/pages/`：页面（首页、团队、服务、联系、博客列表与文章）及 `sitemap.xml.ts`
 - `src/components/seo/`：SEO 组件
-- `src/lib/`：图片懒加载等工具函数
+- `src/lib/`：图片渲染管线（lazy + webp picture）等工具函数
 - `src/data/`：从 WordPress 数据库导出的页面/文章数据
+- `scripts/`：图片审计 / 优化 / 缩略图脚本
 - `public/`：静态资源（Sydney/Elementor 样式、字体、图片与下载文件，含 404 / robots / 验证文件）
 
 ## 迁移说明

@@ -8,13 +8,19 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "check": "astro check"
+    "check": "astro check",
+    "images:audit": "node scripts/optimize-images.mjs audit",
+    "images:optimize": "node scripts/optimize-images.mjs optimize",
+    "images:gif": "node scripts/optimize-images.mjs gif-optimize",
+    "images:thumbs": "node scripts/make-thumbnails.mjs",
+    "images:report": "node scripts/optimize-images.mjs report"
   },
   "dependencies": {
     "astro": "^7.2.4"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.4",
+    "@types/node": "^26.2.0",
     "typescript": "^5.6.0"
   },
   "allowScripts": {

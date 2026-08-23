@@ -2,7 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import blocks from '../data/render_blocks.json';
 import postsData from '../data/posts.json';
-import { lazyImages } from '../lib/lazy';
+import { imagePipeline } from '../lib/image';
 
 const footer = blocks.home_footer.replace(/<\/body>\s*<\/html>\s*$/i, '');
 
@@ -40,7 +40,7 @@ const base = 'https://www.hncbx.org.cn';
 >
   <Fragment set:html={blocks.home_header} />
   <Fragment set:html={blocks.home_hero} />
-  <Fragment set:html={lazyImages(content)} />
+  <Fragment set:html={imagePipeline(content)} />
   <Fragment set:html={footer} />
 </BaseLayout>
 
