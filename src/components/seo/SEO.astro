@@ -2,8 +2,11 @@
 /**
  * SEO component (P0-06). Renders document title, meta description, canonical,
  * and Open Graph / Twitter card tags. For use on every page (home, pages, posts).
- * Posts additionally emit Article JSON-LD; the homepage emits Organization JSON-LD.
+ * Posts additionally emit Article JSON-LD; the homepage emits Organization +
+ * WebSite JSON-LD. Organization identity is driven by src/data/organization.ts.
  */
+import { organization as org } from '../../data/organization';
+
 export interface Props {
   title?: string;
   description?: string;
@@ -14,6 +17,7 @@ export interface Props {
   publishedTime?: string;
   modifiedTime?: string;
   organization?: boolean;   // emit Organization JSON-LD (homepage)
+  website?: boolean;        // emit WebSite JSON-LD (homepage)
 }
 
 const base = 'https://www.hncbx.org.cn';
@@ -21,15 +25,16 @@ const {
   title = '潮百相公益——兴趣公益与社会创新的领导者',
   description = '海宁市潮百相公益发展协会官网',
   canonical = base + Astro.url.pathname,
-  ogImage = base + '/wp-content/uploads/2020/10/加字圆形logo.jpg',
+  ogImage = org.logo,
   ogType = 'website',
   article = false,
   publishedTime = '',
   modifiedTime = '',
   organization = false,
+  website = false,
 } = Astro.props;
 
-const siteName = '潮百相公益';
+const siteName = org.alternateName;
 ---
 
 <title>{title}</title>
@@ -75,9 +80,20 @@ const siteName = '潮百相公益';
   <script type="application/ld+json" set:html={JSON.stringify({
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: '海宁市潮百相公益发展协会',
-    url: base,
-    logo: ogImage,
-    sameAs: ['https://www.hncbx.org.cn'],
+    name: org.name,
+    alternateName: org.alternateName,
+    url: org.url,
+    logo: org.logo,
+    sameAs: org.sameAs,
+  })} />
+)}
+
+{website && (
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: org.alternateName,
+    alternateName: org.name,
+    url: org.url,
   })} />
 )}

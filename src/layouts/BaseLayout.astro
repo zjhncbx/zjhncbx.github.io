@@ -19,6 +19,7 @@ interface Props {
     publishedTime?: string;
     modifiedTime?: string;
     organization?: boolean;
+    website?: boolean;
   };
 }
 
@@ -46,6 +47,7 @@ const {
       publishedTime={seo.publishedTime}
       modifiedTime={seo.modifiedTime}
       organization={seo.organization}
+      website={seo.website}
     />
     <link rel="icon" type="image/jpeg" href="/wp-content/uploads/2020/10/加字圆形logo.jpg" />
     {assets.css.map((href) => (
