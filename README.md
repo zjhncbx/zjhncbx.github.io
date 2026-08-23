@@ -40,12 +40,20 @@ npm run images:report    # 前后对比
 - `public/404.html`：统一视觉的 404 页，含返回首页入口。
 - `src/lib/image.ts`：图片渲染管线——为正文大图追加 `loading="lazy"`、并用 `<picture>` 优先加载 WebP（首屏 Hero / Logo 保持 eager），历史原图 URL 作为回退保留。
 
+## 响应式与前端性能（P2）
+
+- `src/components/ResponsiveImage.astro`：统一图片组件，输出 `<picture>`（WebP）+ 原图回退，支持 `loading`/`decoding`/`fetchpriority`/`width`/`height`/自定义 `webpSrc`。
+- 首页 Footer：全宽居中（CSS 规整，消除宽屏偏左），移动端正常。
+- 首页 Hero：WebP + `eager` + `fetchpriority="high"`，并提供移动 768w 变体。
+- 图片 WebP 映射按**相对上传路径**匹配（避免不同目录同名文件冲突）。
+
 ## 图片优化（P1）
 
 网站图片（大量来自 WordPress 文章正文）通过 `scripts/optimize-images.mjs` 批量生成 `.webp` 副本，
 渲染层用 `<picture>` 优先加载 WebP，支持 WebP 的浏览器下载更小体积，其余回退原图。
 
 > 说明：为保留历史 `/wp-content/uploads/...` URL 与动画，**不删除任何原图**；WebP 副本与原图并存。
+> ⚠️ 站点体积已接近 GitHub Pages ~1GB 上限（历史原图 + WebP 孪生），后续建议将图片迁对象存储/CDN 或 Git LFS。
 
 ## 优化文档
 
@@ -54,11 +62,12 @@ npm run images:report    # 前后对比
 - [`docs/gif-audit.md`](docs/gif-audit.md)：GIF 专项审计（动态 GIF 分类与动画 WebP 处理）。
 - [`docs/P0-optimization-report.md`](docs/P0-optimization-report.md)：P0 阶段性能 / 图片 / SEO 优化报告。
 - [`docs/P1-image-optimization-report.md`](docs/P1-image-optimization-report.md)：P1 图片性能优化报告与 P2 建议。
+- [`docs/P2-responsive-performance-report.md`](docs/P2-responsive-performance-report.md)：P2 响应式布局 / Hero / srcset / 性能报告与 P3 建议。
 
 ## 目录结构
 
 - `src/pages/`：页面（首页、团队、服务、联系、博客列表与文章）及 `sitemap.xml.ts`
-- `src/components/seo/`：SEO 组件
+- `src/components/`：SEO 组件、`ResponsiveImage.astro` 统一图片组件
 - `src/lib/`：图片渲染管线（lazy + webp picture）等工具函数
 - `src/data/`：从 WordPress 数据库导出的页面/文章数据
 - `scripts/`：图片审计 / 优化 / 缩略图脚本
