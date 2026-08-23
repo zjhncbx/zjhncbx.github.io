@@ -82,6 +82,13 @@ if (recentRe.test(content)) {
     width: 100% !important;
   }
 }
+/* Keep all 4 QR images the same size as the first one (150px) */
+.elementor-element-qrgrid .elementor-widget-image img {
+  width: 150px !important;
+  height: 150px !important;
+  object-fit: contain;
+  margin: auto;
+}
 
 /* Tighten the vertical spacing of the main content, hero and footer wrappers */
 #content {
