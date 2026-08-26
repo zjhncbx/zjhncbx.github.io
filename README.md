@@ -68,6 +68,21 @@ npm run wechat:import    # node scripts/import-wechat-articles.mjs --all
 自动参与首页「近期资讯」按实际发布日期排序与 sitemap 生成。迁移清单见
 [`docs/wechat-import-2026-08.md`](docs/wechat-import-2026-08.md)。
 
+## 新闻列表页（/blog/）
+
+新闻通告列表不再一次性列出全部文章，而改为**分页 + 按年份筛选**：
+
+- 每页仅展示 10 篇（`src/lib/blog.ts` 的 `POSTS_PER_PAGE`），旧的全量一页渲染已移除；
+- 右侧「按年份筛选」侧边栏列出各年份及篇数，点击进入对应年份归档页；
+- 路由结构：
+  - `/blog/` —— 全部年份第 1 页；
+  - `/blog/page/N/` —— 全部年份第 N 页；
+  - `/blog/year/YYYY/` —— 某年份第 1 页；
+  - `/blog/year/YYYY/page/N/` —— 某年份第 N 页；
+- 共享渲染组件：`src/components/BlogArchive.astro`（文章列表 + 年份侧边栏 + 分页）；
+- 分页/年份逻辑集中在 `src/lib/blog.ts`（排序、分组、分页、URL 拼接）；
+- 年份归档入口已写入 sitemap（`src/pages/sitemap.xml.ts`）。
+
 ## 图片优化（P1）
 
 网站图片（大量来自 WordPress 文章正文）通过 `scripts/optimize-images.mjs` 批量生成 `.webp` 副本，
@@ -91,8 +106,8 @@ npm run wechat:import    # node scripts/import-wechat-articles.mjs --all
 ## 目录结构
 
 - `src/pages/`：页面（首页、团队、服务、联系、博客列表与文章）及 `sitemap.xml.ts`
-- `src/components/`：SEO 组件、`ResponsiveImage.astro` 统一图片组件
-- `src/lib/`：图片渲染管线（lazy + webp picture）等工具函数
+- `src/components/`：SEO 组件、`ResponsiveImage.astro` 统一图片组件、`BlogArchive.astro` 新闻列表组件
+- `src/lib/`：图片渲染管线（lazy + webp picture）、`blog.ts`（列表分页/年份归档逻辑）等工具函数
 - `src/data/`：从 WordPress 数据库导出的页面/文章数据
 - `scripts/`：图片审计 / 优化 / 缩略图脚本
 - `public/`：静态资源（Sydney/Elementor 样式、字体、图片与下载文件，含 404 / robots / 验证文件）

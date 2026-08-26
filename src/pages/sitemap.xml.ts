@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import postsData from '../data/posts.json';
+import { publishedPosts, yearCounts } from '../lib/blog';
 
 // Auto-generated XML sitemap (P0-08). Emits every canonical route so the
 // sitemap always matches the built site. Canonical domain comes from astro.config.
@@ -32,7 +33,11 @@ export const GET: APIRoute = ({ site }) => {
       lastmod: (p.modified || p.date || '').slice(0, 10),
     }));
 
-  const urls = [...staticPages, ...postPages]
+  // News archive entry pages: /blog/year/<YYYY>/ (year filter).
+  const yearPages: SitemapEntry[] = yearCounts(publishedPosts())
+    .map((y) => ({ loc: `${SITE}/blog/year/${y.year}/` }));
+
+  const urls = [...staticPages, ...yearPages, ...postPages]
     .map(entry)
     .join('\n');
 

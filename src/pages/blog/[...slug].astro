@@ -1,0 +1,80 @@
+---
+// /blog/[...slug] — paginated + year-filtered news archive pages.
+//
+// Handles:
+//   /blog/page/2            → all years, page 2
+//   /blog/year/2025         → year 2025, page 1
+//   /blog/year/2025/page/2  → year 2025, page 2
+//
+// (Page 1 of all years is served by ./index.astro.) See src/components/BlogArchive.astro
+// for the shared rendering.
+import BlogArchive from '../../components/BlogArchive.astro';
+import { publishedPosts, yearCounts, postsInYear, paginate, pageCount } from '../../lib/blog';
+
+/** Parse a [...slug] value like "page/2", "year/2025", "year/2025/page/2". */
+interface ArchiveProps {
+  year: string | null;
+  page: number;
+}
+
+export function getStaticPaths() {
+  const all = publishedPosts();
+  const years = yearCounts(all);
+  const paths: { params: { slug: string }; props: ArchiveProps }[] = [];
+
+  // All years: pages 2..N (page 1 == /blog/ index).
+  const totalAllPages = pageCount(all.length);
+  for (let p = 2; p <= totalAllPages; p++) {
+    paths.push({ params: { slug: `page/${p}` }, props: { year: null, page: p } });
+  }
+
+  // Per year.
+  for (const yy of years) {
+    const yearPosts = postsInYear(all, yy.year);
+    const totalYearPages = pageCount(yearPosts.length);
+    for (let p = 1; p <= totalYearPages; p++) {
+      if (p === 1) {
+        paths.push({ params: { slug: `year/${yy.year}` }, props: { year: yy.year, page: 1 } });
+      } else {
+        paths.push({
+          params: { slug: `year/${yy.year}/page/${p}` },
+          props: { year: yy.year, page: p },
+        });
+      }
+    }
+  }
+
+  return paths;
+}
+
+const all = publishedPosts();
+
+// Resolve the current route from Astro.params.slug (may be undefined).
+function parseRoute(slug: string | undefined): { year: string | null; page: number } {
+  if (!slug) return { year: null, page: 1 };
+  const parts = slug.split('/');
+  if (parts[0] === 'year' && parts[1]) {
+    const pagePart = parts[2] === 'page' && parts[3] ? Number(parts[3]) : 1;
+    return { year: parts[1], page: Number.isFinite(pagePart) ? pagePart : 1 };
+  }
+  if (parts[0] === 'page' && parts[1]) {
+    const page = Number(parts[1]);
+    return { year: null, page: Number.isFinite(page) ? page : 1 };
+  }
+  return { year: null, page: 1 };
+}
+
+const { year, page } = parseRoute(Astro.params.slug);
+const filtered = postsInYear(all, year);
+const posts = paginate(filtered, page);
+const yearsForSidebar = yearCounts(all);
+const totalPages = pageCount(filtered.length);
+---
+
+<BlogArchive
+  posts={posts}
+  years={yearsForSidebar}
+  currentYear={year}
+  page={page}
+  totalPages={totalPages}
+/>
