@@ -15,7 +15,11 @@
     "images:gif": "node scripts/optimize-images.mjs gif-optimize",
     "images:thumbs": "node scripts/make-thumbnails.mjs",
     "images:report": "node scripts/optimize-images.mjs report",
+    "images:orphans": "node scripts/audit-orphans.mjs --plugins",
     "wechat:import": "node scripts/import-wechat-articles.mjs --all"
+  },
+  "engines": {
+    "node": ">=22.12"
   },
   "dependencies": {
     "astro": "^7.2.4"

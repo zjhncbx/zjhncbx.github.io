@@ -44,7 +44,8 @@ const {
 } = Astro.props;
 
 const shell = livepages.blog;
-const base = 'https://www.hncbx.org.cn';
+import { SITE } from '../consts';
+const base = SITE;
 
 /** Canonical URL for the current page. */
 function canonical(): string {

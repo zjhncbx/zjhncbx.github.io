@@ -25,7 +25,8 @@ if (recentRe.test(content)) {
   content = content.replace(recentRe, (_m, pre, post) => pre + recentItems + post);
 }
 
-const base = 'https://www.hncbx.org.cn';
+import { SITE } from '../consts';
+const base = SITE;
 ---
 
 <BaseLayout

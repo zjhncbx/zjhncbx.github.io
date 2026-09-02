@@ -1,10 +1,10 @@
 import type { APIRoute } from 'astro';
 import postsData from '../data/posts.json';
 import { publishedPosts, yearCounts } from '../lib/blog';
+import { SITE as SITE_FALLBACK } from '../consts';
 
 // Auto-generated XML sitemap (P0-08). Emits every canonical route so the
 // sitemap always matches the built site. Canonical domain comes from astro.config.
-const base = 'https://www.hncbx.org.cn';
 
 interface SitemapEntry {
   loc: string;
@@ -16,7 +16,7 @@ function entry(e: SitemapEntry): string {
 }
 
 export const GET: APIRoute = ({ site }) => {
-  const SITE = (site?.toString() || base).replace(/\/$/, '');
+  const SITE = (site?.toString() || SITE_FALLBACK).replace(/\/$/, '');
 
   const staticPages: SitemapEntry[] = [
     { loc: `${SITE}/` },

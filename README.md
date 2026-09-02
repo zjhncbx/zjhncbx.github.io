@@ -24,6 +24,7 @@ npm run images:optimize  # 静态 jpg/png -> webp 副本
 npm run images:gif       # 动态 gif -> 动画 webp 副本
 npm run images:thumbs    # 新闻列表缩略图 480px
 npm run images:report    # 前后对比
+npm run images:orphans   # 孤儿/未引用资源审计（加 --delete 才删除；每次导入文章后建议跑一遍）
 
 # 微信公众号历史文章迁移（--all / --article N / --resume / --dry-run）
 npm run wechat:import    # node scripts/import-wechat-articles.mjs --all
@@ -34,7 +35,7 @@ npm run wechat:import    # node scripts/import-wechat-articles.mjs --all
 仓库内包含 [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)，在 `main` 分支推送后由 GitHub Actions 自动执行
 `npm ci → npm run check → npm run build → Pages deploy` 并发布到 GitHub Pages。
 
-站内所有链接与 canonical 均使用正式域名 `https://www.hncbx.org.cn`；仓库同时可经由 `https://zjhncbx.github.io` 访问。
+站内所有链接与 canonical 均使用正式域名 `https://www.hncbx.org.cn`，域名单一来源为 `src/consts.ts`（`astro.config.mjs` 的 `site` 亦由此导入）；仓库同时可经由 `https://zjhncbx.github.io` 访问。自定义域凭 `public/CNAME` 随构建产物发布。
 
 ## SEO / 内容优化
 
@@ -47,6 +48,8 @@ npm run wechat:import    # node scripts/import-wechat-articles.mjs --all
 ## 响应式与前端性能（P2）
 
 - `src/components/ResponsiveImage.astro`：统一图片组件，输出 `<picture>`（WebP）+ 原图回退，支持 `loading`/`decoding`/`fetchpriority`/`width`/`height`/自定义 `webpSrc`。
+- 全局布局覆盖样式统一放在 `public/assets/inline.css`（批次①起；此前由 BaseLayout 以 `<style>` 逐页重复输出约 6KB×295 页，现外置可缓存）。
+- 字体资源只保留现役 `@font-face` 实际使用的 woff2/woff 与现代图片格式；legacy eot/ttf/otf 与字体目录内 svg（IE 时代回退）已从仓库移除。
 - 首页 Footer：全宽居中（CSS 规整，消除宽屏偏左），移动端正常。
 - 首页 Hero：WebP + `eager` + `fetchpriority="high"`，并提供移动 768w 变体。
 - 图片 WebP 映射按**相对上传路径**匹配（避免不同目录同名文件冲突）。
@@ -90,8 +93,11 @@ npm run wechat:import    # node scripts/import-wechat-articles.mjs --all
 
 > 说明：为保留历史 `/wp-content/uploads/...` URL 与动画，**不删除任何原图**；WebP 副本与原图并存。
 >
-> **P3 体积治理（已执行）**：发布层对带 WebP 孪生的图片只输出 WebP；`build:prune` 在构建后从 `dist` 移除无引用且带孪生的原图（原图仍保留于仓库）；对 SHA-256 相同的历史图片做了统一去重，把 `dist` 由 ~1013 MB 降到 **295 MB**、`public` 由 ~997 MB 降到 **678 MB**。详见 [`docs/P3-size-optimization-report.md`](docs/P3-size-optimization-report.md)。
-> ⚠️ 站点体积已接近 GitHub Pages ~1GB 上限（历史原图 + WebP 孪生），后续建议将图片迁对象存储/CDN 或 Git LFS。
+> **P3 体积治理（已执行）**：发布层对带 WebP 孪生的图片只输出 WebP；`build:prune` 在构建后从 `dist` 移除无引用且带孪生的原图（原图仍保留于仓库）；对 SHA-256 相同的历史图片做了统一去重，把 `dist` 由 ~1013 MB 降到 **295 MB**、`public` 由 ~997 MB 降到 **674 MB**。详见 [`docs/P3-size-optimization-report.md`](docs/P3-size-optimization-report.md)。
+>
+> **批次① 死资源清理（2026-08-27）**：新增 `scripts/audit-orphans.mjs`（引用闭包审计），删除 uploads 孤儿 19 个（0.9MB）与 plugins/themes/wp-includes 未引用文件 145 个（10.0MB，含 PHP、demo-content、管理后台 CSS、legacy 字体）；同时移除数据文件中的零引用死键（`render_blocks.home_full`、`livepages.blog.body/css/content_prefix`）。清单见 [`docs/orphans-2026-08.md`](docs/orphans-2026-08.md)。
+>
+> ⚠️ 站点体积仍受历史原图 + WebP 孪生制约（prune 后发布约 290MB），后续建议将图片迁对象存储/CDN 或 Git LFS。
 
 ## 优化文档
 
@@ -102,14 +108,17 @@ npm run wechat:import    # node scripts/import-wechat-articles.mjs --all
 - [`docs/P1-image-optimization-report.md`](docs/P1-image-optimization-report.md)：P1 图片性能优化报告与 P2 建议。
 - [`docs/P2-responsive-performance-report.md`](docs/P2-responsive-performance-report.md)：P2 响应式布局 / Hero / srcset / 性能报告与 P3 建议。
 - [`docs/wechat-import-2026-08.md`](docs/wechat-import-2026-08.md)：微信公众号历史文章完整迁移清单与核验结果。
+- [`docs/structure-optimization-2026-08.md`](docs/structure-optimization-2026-08.md)：项目结构全面审计与分批次优化方案（本 README 各批次的执行依据）。
+- [`docs/orphans-2026-08.md`](docs/orphans-2026-08.md)：批次① 孤儿与死资源删除清单（方法、安全校验、164 个文件逐项列表）。
 
 ## 目录结构
 
 - `src/pages/`：页面（首页、团队、服务、联系、博客列表与文章）及 `sitemap.xml.ts`
 - `src/components/`：SEO 组件、`ResponsiveImage.astro` 统一图片组件、`BlogArchive.astro` 新闻列表组件
 - `src/lib/`：图片渲染管线（lazy + webp picture）、`blog.ts`（列表分页/年份归档逻辑）等工具函数
+- `src/consts.ts`：全站正式域名（单一来源，供 canonical / og / sitemap / astro.config 复用）
 - `src/data/`：从 WordPress 数据库导出的页面/文章数据
-- `scripts/`：图片审计 / 优化 / 缩略图脚本
+- `scripts/`：图片审计 / 优化 / 缩略图脚本，`audit-orphans.mjs`（孤儿与死资源审计/删除），`prune-dist.mjs`（发布瘦身）
 - `public/`：静态资源（Sydney/Elementor 样式、字体、图片与下载文件，含 404 / robots / 验证文件）
 
 ## 迁移说明

@@ -6,7 +6,8 @@ import livepages from '../data/livepages.json';
 const page = livepages.team;
 const globalCss = new Set(assetsData.css);
 const extraCss = page.css.filter((c) => !globalCss.has(c));
-const base = 'https://www.hncbx.org.cn';
+import { SITE } from '../consts';
+const base = SITE;
 ---
 
 <BaseLayout
