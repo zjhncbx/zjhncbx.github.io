@@ -67,7 +67,8 @@ npm run wechat:import    # node scripts/import-wechat-articles.mjs --all
 - 所有内容使用官网正式 URL。
 
 迁移由 `scripts/import-wechat-articles.mjs` 执行（`npm run wechat:import`），统一媒体展示使用
-`src/components/VideoEmbed.astro`。文章写入 `src/data/posts.json`（`sourcePlatform: 'wechat'`），
+`src/components/VideoEmbed.astro`。文章元数据写入 `src/data/posts.meta.json`（含预生成摘要字段
+`excerpt`/`desc`，`sourcePlatform: 'wechat'`），正文写入 `src/data/posts/<id>.html`，
 自动参与首页「近期资讯」按实际发布日期排序与 sitemap 生成。迁移清单见
 [`docs/wechat-import-2026-08.md`](docs/wechat-import-2026-08.md)。
 
@@ -84,6 +85,8 @@ npm run wechat:import    # node scripts/import-wechat-articles.mjs --all
   - `/blog/year/YYYY/page/N/` —— 某年份第 N 页；
 - 共享渲染组件：`src/components/BlogArchive.astro`（文章列表 + 年份侧边栏 + 分页）；
 - 分页/年份逻辑集中在 `src/lib/blog.ts`（排序、分组、分页、URL 拼接）；
+- 数据分两层：列表/年份/首页/sitemap 只读轻量的 `src/data/posts.meta.json`（约 240KB，含预生成摘要），
+  文章正文按篇存于 `src/data/posts/<id>.html`，仅文章页按需加载（批次② 拆分自原 12MB 单体 `posts.json`）；
 - 年份归档入口已写入 sitemap（`src/pages/sitemap.xml.ts`）。
 
 ## 图片优化（P1）
@@ -113,12 +116,12 @@ npm run wechat:import    # node scripts/import-wechat-articles.mjs --all
 
 ## 目录结构
 
-- `src/pages/`：页面（首页、团队、服务、联系、博客列表与文章）及 `sitemap.xml.ts`
+- `src/pages/`：页面（首页、博客列表 `[...slug]` 与文章 `[id]`、`[page]` 静态栏目页 = 团队/服务/联系）及 `sitemap.xml.ts`
 - `src/components/`：SEO 组件、`ResponsiveImage.astro` 统一图片组件、`BlogArchive.astro` 新闻列表组件
-- `src/lib/`：图片渲染管线（lazy + webp picture）、`blog.ts`（列表分页/年份归档逻辑）等工具函数
+- `src/lib/`：图片渲染管线（lazy + webp picture）、`blog.ts`（列表分页/年份归档、正文按需加载）等工具函数
 - `src/consts.ts`：全站正式域名（单一来源，供 canonical / og / sitemap / astro.config 复用）
-- `src/data/`：从 WordPress 数据库导出的页面/文章数据
-- `scripts/`：图片审计 / 优化 / 缩略图脚本，`audit-orphans.mjs`（孤儿与死资源审计/删除），`prune-dist.mjs`（发布瘦身）
+- `src/data/`：WordPress 导出数据——`posts.meta.json`（文章元数据 + 预生成摘要）、`posts/<id>.html`（正文）、`livepages.json`（栏目页快照）、`render_blocks.json`（首页块）、`staticPages.ts`（栏目页文案）、`organization.ts`
+- `scripts/`：图片审计 / 优化 / 缩略图脚本，`audit-orphans.mjs`（孤儿与死资源审计/删除），`split-posts.mjs`（批次② 一次性数据拆分），`prune-dist.mjs`（发布瘦身），`import-wechat-articles.mjs`（微信文章导入）
 - `public/`：静态资源（Sydney/Elementor 样式、字体、图片与下载文件，含 404 / robots / 验证文件）
 
 ## 迁移说明

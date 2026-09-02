@@ -7,7 +7,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const posts = JSON.parse(fs.readFileSync(path.join(root, "src", "data", "posts.json"), "utf-8"));
+const posts = JSON.parse(fs.readFileSync(path.join(root, "src", "data", "posts.meta.json"), "utf-8"));
 const thumbs = new Set();
 for (const p of posts) {
   if (p.status !== "publish" || !p.title || !p.thumb) continue;

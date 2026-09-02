@@ -1,7 +1,7 @@
 # 项目结构全面审计与优化方案（2026-08）
 
 > 生成日期：2026-08-27 · 仓库：`zjhncbx/zjhncbx.github.io` · 基线 commit：`a68d051`（新闻列表分页 + 年份侧栏上线后）
-> 性质：只读审计 + 方案设计；**批次① 已于同日实施完毕**（见文中 ✅ 注记与 `docs/orphans-2026-08.md`），其余批次待排期。
+> 性质：只读审计 + 方案设计；**批次①②③ 已实施完毕**（①见 `docs/orphans-2026-08.md`，②③见文中 ✅ 注记），批次④⑤待排期。
 
 ---
 
@@ -31,7 +31,7 @@
 
 ### P0 结构性风险
 
-#### P0-1 `posts.json` 单文件巨石（12MB / 平均 48KB/篇）
+#### P0-1 `posts.json` 单文件巨石（12MB / 平均 48KB/篇） ✅（批次②已执行 2026-08-27）
 - 首页、`[id]`、`index`、`[...slug]`、`sitemap.xml.ts` 全部整体 `import`，每次构建解析 12MB；任何一篇改动重写整个 JSON → 巨型 git diff，且只增不减地推高 `.git`。
 - `BlogArchive` Props 每篇携带完整 `content`，而列表只用 `stripHtml(content).slice(0,160)` 级别的摘要（24 个分页 × 每页 10 篇 × 平均 48KB 的序列化浪费）。
 - 死字段/坏字段：`slug`、`url`（值含 `//` 双斜杠 bug，如 `hncbx.org.cn//blog/666/`）、`views/likes/favs/comments`、`thumbnail`（附件数字 id，与 `thumb` URL 易混）——源码零引用。
@@ -44,6 +44,8 @@ src/data/posts/<id>.json        # { content }  仅 [id].astro 与导入脚本按
 - `lib/blog.ts` 改读 meta 层；`[id].astro` 用 `fs.readFileSync`/`import.meta.glob` 单篇读取。
 - 迁移脚本一次转换 + `import-wechat-articles.mjs` 落盘方式同步调整。
 - （更彻底可转 Astro Content Collections，但上述拆分已可解决 90% 痛点、迁移面最小。）
+
+> **执行注记（批次②）**：`scripts/split-posts.mjs`（一次性）已拆出 `posts.meta.json` **241KB** + `src/data/posts/<id>.html` 240 个正文文件；正文经 `lib/blog.ts` 的 `import.meta.glob('?raw')` 懒加载。摘要/描述按旧渲染的**两套精确公式**固化为 `excerpt`(collapse+140，列表) 与 `desc`(未折叠+160，文章 meta)，自检 0 失配；删 5 个死字段。全部消费端（blog/[id]/[...slug]/index/sitemap）与三个工具脚本（import/make-thumbnails/optimize-images）同步适配；livepages 再清死键 -187KB（三栏目页的 header/footer/content_prefix）。**回归**：9 个代表页（覆盖全部模板）+ sitemap 与基线**逐字节一致**，295 页不减；常驻构建输入 12.6MB → 0.5MB。踩坑复用：getStaticPaths 不可见 frontmatter 组件级常量，页面文案外置 `src/data/staticPages.ts`。
 
 #### P0-2 仓库/发布体积逼近 GitHub 多重上限
 Pages 站点软上限 1GB、仓库软上限 1GB、带宽 100GB/月；每导入一批微信文章都在消耗余量。实测浪费：
@@ -86,10 +88,10 @@ Pages 站点软上限 1GB、仓库软上限 1GB、带宽 100GB/月；每导入�
 
 | 编号 | 问题 | 方案 |
 | --- | --- | --- |
-| P2-1 | contact/services/team 三页 23 行逐字相同 | 抽 `LivePage.astro` 组件（props: key/title/desc/canonical），或 `src/pages/[page].astro` + getStaticPaths 遍历 livepages keys |
-| P2-2 | `fmtDate` 在 `[id].astro` 重复实现；剥标签摘要逻辑 3 处各写各的 | 统一从 `lib/blog.ts` 导入；`stripHtml` 增 `truncate` |
+| P2-1 | contact/services/team 三页 23 行逐字相同 ✅（批次③） | 已收敛为 `src/pages/[page].astro` + `src/data/staticPages.ts`（文案/路由键），三文件删除，输出逐字节一致 |
+| P2-2 | `fmtDate` 在 `[id].astro` 重复实现；剥标签摘要逻辑 3 处各写各的 ✅（批次②③） | `fmtDate`/`isoDate` 统一 `lib/blog.ts`；摘要公式在数据层固化为 `excerpt`/`desc`，渲染端不再各自剥标签 |
 | P2-3 | `const base='https://www.hncbx.org.cn'` 硬编码于 8 个文件 ✅（批次①） | 已建 `src/consts.ts` 单一来源，8 处全部改为导入；`astro.config.mjs` 的 `site` 亦从其导入，全仓仅一处字面量 |
-| P2-4 | `prune-dist.mjs` 拼接 ~20MB 全文后逐文件 `includes`（O(n·m)，"任意位置出现即保留"过脆） | 一次正则抽 `/wp-content/uploads/...` 路径构建 `Set`，成员判断 O(1)；报告新增 prune 明细 |
+| P2-4 | `prune-dist.mjs` 拼接 ~20MB 全文后逐文件 `includes`（O(n·m)，"任意位置出现即保留"过脆） ✅（批次③） | 已改为一次正则抽 uploads 引用 → 排序数组 + 二分前缀判定；与旧 substring 逻辑在现网 dist 上**同删 1130 / 同留 99 / 同释放 418.3MB**，行为等价 |
 | P2-5 | 根目录 `CNAME` 与 `public/CNAME` 重复（deploy-pages 只认 dist 那份）✅（批次①） | 根 CNAME 已删除，保留 `public/CNAME` 并在 README 注明 |
 | P2-6 | 无 lint/format；`package.json` 缺 `engines`（README 要求 Node ≥22.12） | `engines` 已加（批次①）；eslint(preset-astro)+prettier 仍待办 |
 | P2-7 | `astro check` 存量 50 hints（SEO/VideoEmbed 模板属性） | 顺手清零，保持 0 errors/warnings 基线 |
@@ -110,10 +112,10 @@ Pages 站点软上限 1GB、仓库软上限 1GB、带宽 100GB/月；每导入�
 | 批次 | 内容 | 风险 | 预期收益 |
 | --- | --- | --- | --- |
 | ① 快赢（半天）✅ **已执行 2026-08-27** | P0-2.1/2 删孤儿+未引用资源+死数据键；P1-2 内联 CSS 外置；P2-3/5/6(engines) | 低 | **实测**：public -10.9MB（684→674）、164 文件；数据 JSON -101KB；每页 HTML -6KB 且可缓存；回归逐字节一致 |
-| ② 数据层（1 天） | P0-1 posts 拆分 + 死字段清理 + 导入脚本适配 | 中（全链路回归） | 构建解析 -95%，git diff 友好，列表 props 缩小 ~40× |
-| ③ 代码收敛（半天） | P2-1/2/4/6(余 lint) | 低 | 三页合一，prune O(n)，基线卫生 |
+| ② 数据层（1 天） ✅ **已执行 2026-08-27** | P0-1 posts 拆分 + 死字段清理 + 导入脚本适配 | 中（全链路回归） | **实测**：常驻构建 JSON 12.6→0.5MB；meta 241KB + 正文 240 文件；livepages 再 -187KB；9 代表页逐字节回归一致 |
+| ③ 代码收敛（半天） ✅ **已执行 2026-08-27（与②同批）** | P2-1/2/4 完成；P2-6 余 eslint（可选，未引入） | 低 | 三页合一（净 -2 文件）、日期/摘要归一、prune 前缀二分判定（1130删/99留 与旧逻辑完全一致） |
 | ④ 性能分层（1 天） | P1-1 按模板 CSS/JS、P1-3 回退缩略、P1-4 CLS | 中 | 文章/列表页首传 -300–500KB，CLS 达标 |
-| ⑤ 战略（评审后） | P0-2.3 媒体 CDN/LFS、P3-1 Actions 触发、P3-3 RSS | 高（外部依赖） | 解除 1GB 天花板，CI 分钟级 |
+| ⑤ 战略（评审后） | P0-2.3 媒体 CDN/LFS、~~P3-1 Actions 触发~~（已恢复正常，b0ac2ed 起 push 自动部署）、P3-3 RSS | 高（外部依赖） | 解除 1GB 天花板，CI 分钟级 |
 
 > **初稿「批次① dist -170MB±」的修正**：该估算基于误判的孤儿集（见 P0-2 更正注记）。uploads 体积几乎全属在用/归档设计内，快赢清理的真实收益是 framework 10MB + 每页字节与请求卫生；**发布体积的数量级下降只能依赖批次⑤媒体外迁**。
 
@@ -121,13 +123,13 @@ Pages 站点软上限 1GB、仓库软上限 1GB、带宽 100GB/月；每导入�
 
 ## 4. 量化收益汇总
 
-| 指标 | 现状（基线 a68d051） | 批次①后（实测） | 完成②–④后（目标） |
-| --- | ---: | ---: | ---: |
-| public / dist（发布） | 684MB / ~295MB | **674MB / 290MB** | 674MB / ~285MB |
-| 每页 HTML 重复内联 CSS | 6KB × 295 | **0**（入 inline.css） | 0 |
-| 每页固定 CSS+JS | ~0.85MB | ~0.85MB | 列表/文章 ~0.4MB |
-| 构建输入 JSON | 12.6MB | 12.45MB | ~0.8MB（meta 层） |
-| 孤儿/死资源残留 | uploads 19 + fw 145 + 死键 101KB | **0** | 0（`images:orphans` 常态化） |
-| 新增一篇文章的 git diff | 重写 12MB 行 | 不变 | ~50KB 新文件 |
+| 指标 | 现状（基线 a68d051） | 批次①后 | 批次②③后（实测） | 完成④后（目标） |
+| --- | ---: | ---: | ---: | ---: |
+| public / dist（发布） | 684MB / ~295MB | **674MB / 290MB** | 674MB / 290MB（dist 不变，属批次⑤范畴） | 674MB / ~285MB |
+| 每页 HTML 重复内联 CSS | 6KB × 295 | **0**（入 inline.css） | 0 | 0 |
+| 每页固定 CSS+JS | ~0.85MB | ~0.85MB | ~0.85MB | 列表/文章 ~0.4MB |
+| 常驻构建输入 JSON | 12.6MB | 12.45MB | **~0.5MB（meta 层，正文按需）** | ~0.5MB |
+| 孤儿/死资源残留 | uploads 19 + fw 145 + 死键 101KB | **0** | 0（livepages 再清死键 -187KB，`images:orphans` 复核 0） | 0 |
+| 新增一篇文章的 git diff | 重写 12MB 行 | 不变 | **~50KB 新文件（posts/<id>.html）+ meta 追加** | 同左 |
 
 发布体积的数量级下降（290MB → <20MB）属**批次⑤（媒体外迁）**范畴，快赢与代码层优化无法替代。

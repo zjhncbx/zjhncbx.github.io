@@ -33,9 +33,10 @@ function walk(dir, out = []) {
 // Referenced uploads paths (robust: handles JSON escaping + srcset + css url()).
 function readTexts() {
   const t = [];
-  for (const s of ["src/data/posts.json", "src/data/render_blocks.json", "src/data/livepages.json", "src/data/assets.json"]) {
+  for (const s of ["src/data/posts.meta.json", "src/data/render_blocks.json", "src/data/livepages.json", "src/data/assets.json"]) {
     if (fs.existsSync(s)) t.push(fs.readFileSync(s, "utf-8"));
   }
+  if (fs.existsSync("src/data/posts")) for (const p of walk("src/data/posts")) t.push(fs.readFileSync(p, "utf-8")); // batch ② per-post bodies
   for (const p of walk("src")) if (p.endsWith(".astro")) t.push(fs.readFileSync(p, "utf-8"));
   for (const p of walk("public")) if (p.endsWith(".css")) t.push(fs.readFileSync(p, "utf-8"));
   return t;

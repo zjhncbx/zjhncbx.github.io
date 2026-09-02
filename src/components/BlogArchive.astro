@@ -17,7 +17,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import livepages from '../data/livepages.json';
 import ResponsiveImage from './ResponsiveImage.astro';
-import { fmtDate, stripHtml } from '../lib/blog';
+import { fmtDate } from '../lib/blog';
 
 interface Props {
   posts: {
@@ -26,8 +26,8 @@ interface Props {
     date: string;
     categories: string[];
     thumb?: string;
+    /** Pre-generated collapsed 140-char excerpt (src/data/posts.meta.json). */
     excerpt: string;
-    content: string;
   }[];
   years: { year: string; count: number }[];
   currentYear?: string | null;
@@ -134,7 +134,7 @@ function pageItems(current: number, total: number): (number | '…')[] {
                         </h2>
                       </header>
                       <div class="entry-post">
-                        <p>{stripHtml(p.excerpt || p.content).slice(0, 140)}</p>
+                        <p>{p.excerpt}</p>
                       </div>
                     </div>
                   </article>

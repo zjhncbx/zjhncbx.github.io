@@ -1,0 +1,37 @@
+---
+/**
+ * Static live-captured pages (batch ③: was three near-identical page files).
+ *
+ * team / services / contact render a `livepages.json` body inside BaseLayout,
+ * topping up per-page CSS that isn't already in the global asset list.
+ * The route keys + copy come from src/data/staticPages.ts (module scope, so
+ * getStaticPaths can read them).
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import assetsData from '../data/assets.json';
+import livepages from '../data/livepages.json';
+import { STATIC_PAGES } from '../data/staticPages';
+import { SITE } from '../consts';
+
+interface LivePage { css: string[]; body: string }
+
+export function getStaticPaths() {
+  return Object.keys(STATIC_PAGES).map((page) => ({ params: { page } }));
+}
+
+const key = Astro.params.page as string;
+const page = (livepages as unknown as Record<string, LivePage>)[key];
+const meta = STATIC_PAGES[key];
+const globalCss = new Set(assetsData.css);
+const extraCss = page.css.filter((c) => !globalCss.has(c));
+const base = SITE;
+---
+
+<BaseLayout
+  title={meta.title}
+  description={meta.description}
+  styles={extraCss}
+  seo={{ title: meta.title, description: meta.description, canonical: `${base}/${key}/` }}
+>
+  <Fragment set:html={page.body} />
+</BaseLayout>

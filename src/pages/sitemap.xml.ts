@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import postsData from '../data/posts.json';
+import postsMeta from '../data/posts.meta.json';
 import { publishedPosts, yearCounts } from '../lib/blog';
 import { SITE as SITE_FALLBACK } from '../consts';
 
@@ -26,7 +26,7 @@ export const GET: APIRoute = ({ site }) => {
     { loc: `${SITE}/contact/` },
   ];
 
-  const postPages: SitemapEntry[] = postsData
+  const postPages: SitemapEntry[] = postsMeta
     .filter((p) => p.status === 'publish' && p.title)
     .map((p) => ({
       loc: `${SITE}/blog/${p.id}/`,

@@ -1,25 +1,23 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import livepages from '../../data/livepages.json';
-import postsData from '../../data/posts.json';
+import postsMeta from '../../data/posts.meta.json';
+import { fmtDate, isoDate, loadPostBody } from '../../lib/blog';
 import { imagePipeline } from '../../lib/image';
+import { SITE } from '../../consts';
 
 export function getStaticPaths() {
-  return postsData.map((p) => ({ params: { id: String(p.id) } }));
+  return postsMeta.map((p) => ({ params: { id: String(p.id) } }));
 }
 
 const shell = livepages.blog;
-const post = postsData.find((p) => String(p.id) === Astro.params.id);
+const post = postsMeta.find((p) => String(p.id) === Astro.params.id);
+// batch ②: the body is the only 12MB-store element an article page needs; it is
+// lazy-imported per id so no route ever parses posts it does not render.
+const content = post ? await loadPostBody(String(post.id)) : '';
 
-const fmtDate = (d: string | undefined) => {
-  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d || '');
-  return m ? `${m[1]}年${+m[2]}月${+m[3]}日` : d;
-};
-
-const isoDate = (d: string | undefined) => (d ? String(d).slice(0, 10) : '');
 // first image url in content for og:image (prefer the post thumbnail when present)
-const firstImage = post && (post.thumb || (/src="([^"]+)"/.exec(post?.content || '') || [])[1]);
-import { SITE } from '../../consts';
+const firstImage = post && (post.thumb || (/src="([^"]+)"/.exec(content) || [])[1]);
 const base = SITE;
 const canonical = post ? `${base}/blog/${post.id}/` : base;
 const ogImage = firstImage ? (firstImage.startsWith('http') ? firstImage : base + firstImage) : undefined;
@@ -27,10 +25,10 @@ const ogImage = firstImage ? (firstImage.startsWith('http') ? firstImage : base 
 
 <BaseLayout
   title={`${post?.title ?? '文章'} | 潮百相公益——兴趣公益与社会创新的领导者`}
-  description={(post?.excerpt || post?.content || '').replace(/<[^>]+>/g, ' ').trim().slice(0, 160)}
+  description={post?.desc ?? ''}
   seo={{
     title: `${post?.title ?? '文章'} | 潮百相公益——兴趣公益与社会创新的领导者`,
-    description: (post?.excerpt || post?.content || '').replace(/<[^>]+>/g, ' ').trim().slice(0, 160),
+    description: post?.desc ?? '',
     canonical,
     ogImage,
     ogType: 'article',
@@ -64,7 +62,7 @@ const ogImage = firstImage ? (firstImage.startsWith('http') ? firstImage : base 
                   <h1 class="title-post entry-title">{post?.title}</h1>
                 </header>
                 <div class="entry-content">
-                  {post && <Fragment set:html={imagePipeline(post.content)} />}
+                  {post && <Fragment set:html={imagePipeline(content)} />}
                 </div>
               </div>
             </article>

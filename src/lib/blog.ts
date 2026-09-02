@@ -1,22 +1,38 @@
 // Blog archive helpers (src/lib/blog.ts).
 //
-// The news page (/blog/) historically rendered every published post on a single
-// page. This module centralises the filtering, year grouping, pagination and URL
-// building used by the news list routes so the archive can be paged and filtered
-// by year without duplicating logic.
+// Centralises the filtering, year grouping and pagination used by the news list
+// routes so the archive can be paged and filtered by year without duplicating
+// logic. Since batch ② the article store is split: this module (and every list
+// page) only touches the lightweight `posts.meta.json` — full bodies live in
+// `src/data/posts/<id>.html` and are loaded per article page via loadPostBody().
 
-import postsData from '../data/posts.json';
+import postsMeta from '../data/posts.meta.json';
 
-export type Post = (typeof postsData)[number];
+export type Post = (typeof postsMeta)[number];
 
 /** How many posts to render per page (instead of the whole archive at once). */
 export const POSTS_PER_PAGE = 10;
 
 /** Published, titled posts sorted newest-first (the "news" set). */
 export function publishedPosts(): Post[] {
-  return postsData
+  return postsMeta
     .filter((p) => p.status === 'publish' && p.title)
     .sort((a, b) => (a.date > b.date ? -1 : a.date < b.date ? 1 : 0));
+}
+
+/** Lazy map of article bodies (raw HTML), keyed like "../data/posts/<id>.html". */
+const postBodies = import.meta.glob('../data/posts/*.html', { query: '?raw', import: 'default' });
+
+/** Load one article body; returns '' when the post has no stored content. */
+export async function loadPostBody(id: string): Promise<string> {
+  const key = `../data/posts/${id}.html`;
+  const load = postBodies[key];
+  return load ? ((await load()) as string) : '';
+}
+
+/** ISO date (YYYY-MM-DD) from a WP datetime string, '' when absent. */
+export function isoDate(d: string | undefined): string {
+  return d ? String(d).slice(0, 10) : '';
 }
 
 /** Year (YYYY) a post was published, or '' if the date has no year. */
@@ -59,9 +75,9 @@ export function pageCount(count: number, perPage = POSTS_PER_PAGE): number {
 /**
  * Human date like "2025年1月12日" (matches the rest of the site).
  */
-export function fmtDate(d: string): string {
+export function fmtDate(d: string | undefined): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d || '');
-  return m ? `${m[1]}年${+m[2]}月${+m[3]}日` : d;
+  return m ? `${m[1]}年${+m[2]}月${+m[3]}日` : (d ?? '');
 }
 
 /** Strip HTML tags and collapse whitespace (for the excerpt). */

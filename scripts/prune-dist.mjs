@@ -38,6 +38,28 @@ const builtFiles = collectText(DIST);
 const ALL_TEXT = textParts.join('\n');
 console.log('built text files scanned:', builtFiles, '| combined text chars:', ALL_TEXT.length);
 
+// 1b) extract the unique set of uploads references once. An original is KEPT if
+//     any reference starts with its exact path — identical semantics to the old
+//     `ALL_TEXT.includes(srcPath)` substring check (it also kept originals that
+//     merely prefix a longer referenced path, e.g. `x.jpeg` inside `x.jpeg-bar.png`),
+//     but O(1)-ish membership via a sorted prefix scan instead of 1200 full-text
+//     substring searches over ~16MB.
+const re = /\/wp-content\/uploads\/[^"'\\<>)\s?#]+/g;
+const refs = new Set();
+for (const m of ALL_TEXT.matchAll(re)) refs.add(m[0]);
+textParts.length = 0; // free the ~16MB blob; only the ref set is needed now
+const sortedRefs = [...refs].sort();
+console.log('unique uploads refs in built text:', refs.size);
+function isReferenced(srcPath) {
+  // binary-search the first ref >= srcPath; kept iff it starts with srcPath
+  let lo = 0, hi = sortedRefs.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (sortedRefs[mid] < srcPath) lo = mid + 1; else hi = mid;
+  }
+  return lo < sortedRefs.length && sortedRefs[lo].startsWith(srcPath);
+}
+
 // 2) walk uploads, delete originals that have a webp twin and whose exact path is never referenced
 if (!fs.existsSync(UP)) { console.log('wp-content/uploads not in dist; nothing to prune.'); process.exit(0); }
 const all = [];
@@ -61,7 +83,7 @@ for (const [stem, set] of byStem) {
   const orig = set[origExt];
   const rel = orig.replace(UP + path.sep, '').replace(/\\/g, '/');
   const srcPath = '/wp-content/uploads/' + rel;
-  if (ALL_TEXT.includes(srcPath)) {
+  if (isReferenced(srcPath)) {
     keptCount++;
     keptBytes += fs.statSync(orig).size;
     continue;

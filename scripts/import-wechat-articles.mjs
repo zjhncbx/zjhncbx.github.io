@@ -6,7 +6,7 @@
  *   node scripts/import-wechat-articles.mjs --all          fetch + import every article in the manifest
  *   node scripts/import-wechat-articles.mjs --article 3    import a single article (1-indexed)
  *   node scripts/import-wechat-articles.mjs --resume       import only articles not already imported
- *   node scripts/import-wechat-articles.mjs --dry-run      parse + stage assets, do not touch posts.json
+ *   node scripts/import-wechat-articles.mjs --dry-run      parse + stage assets, do not write posts.meta.json
  *
  * Rules honoured (from the task book):
  *   - Keeps the ORIGINAL image bytes (historical URLs stay valid).
@@ -24,7 +24,9 @@ import path from 'node:path';
 const ROOT = process.cwd();
 const CACHE = path.join(ROOT, '_import_tmp', 'cache');
 const WORK = path.join(ROOT, '_import_tmp');
-const POSTS_FILE = path.join(ROOT, 'src', 'data', 'posts.json');
+// batch ② split store: metadata lives in posts.meta.json, bodies in posts/<id>.html
+const META_FILE = path.join(ROOT, 'src', 'data', 'posts.meta.json');
+const BODIES_DIR = path.join(ROOT, 'src', 'data', 'posts');
 const WECHAT_ROOT = path.join(ROOT, 'public', 'wp-content', 'uploads', 'wechat');
 const IMPORTED_FILE = path.join(WORK, 'imported.json');
 const SITE = 'https://www.hncbx.org.cn';
@@ -389,21 +391,45 @@ async function main() {
   // always write the staged posts to a scratch file for verification
   if (posts.length) fs.writeFileSync(path.join(WORK, 'staged-posts.json'), JSON.stringify(posts, null, 0));
 
-  // merge into posts.json (replace any prior wechat posts, so re-runs stay idempotent)
+  // merge into the split store (posts.meta.json + posts/<id>.html), replacing any
+  // prior wechat posts so re-runs stay idempotent. Summary fields are pre-generated
+  // with the exact render formulas (see scripts/split-posts.mjs).
+  const stripTags = (h) => h.replace(/<[^>]+>/g, ' ');
+  const collapse = (h) => stripTags(h).replace(/\s+/g, ' ').trim();
+  const toMeta = (p) => {
+    const basis = p.content || '';
+    const m = {
+      id: p.id,
+      title: p.title,
+      date: p.date,
+      modified: p.modified,
+      status: p.status,
+      categories: p.categories,
+      thumb: p.thumb || '',
+      excerpt: collapse(basis).slice(0, 140),
+      desc: stripTags(basis).trim().slice(0, 160),
+    };
+    for (const k of ['sourcePlatform', 'sourceUrl', 'sourceAccount']) if (p[k]) m[k] = p[k];
+    return m;
+  };
   if (!dryRun && posts.length) {
-    let all = JSON.parse(fs.readFileSync(POSTS_FILE, 'utf8'));
+    let all = JSON.parse(fs.readFileSync(META_FILE, 'utf8'));
     all = all.filter((p) => p.sourcePlatform !== 'wechat');
     for (const p of posts) {
-      if (!all.some((x) => x.id === p.id)) all = all.concat(p);
+      if (!all.some((x) => x.id === p.id)) {
+        all = all.concat(toMeta(p));
+        fs.mkdirSync(BODIES_DIR, { recursive: true });
+        fs.writeFileSync(path.join(BODIES_DIR, `${p.id}.html`), p.content || '');
+      }
     }
-    fs.writeFileSync(POSTS_FILE, JSON.stringify(all, null, 0));
+    fs.writeFileSync(META_FILE, JSON.stringify(all, null, 0));
     for (const p of posts) {
       if (!imported.posts.some((x) => x.id === p.id)) {
         imported.posts.push({ n: parseInt(p.id, 10) - 10000, id: p.id, title: p.title, date: p.date });
       }
     }
     saveImported(imported);
-    console.log(`\nWrote ${posts.length} wechat posts to ${POSTS_FILE} (total posts=${all.length})`);
+    console.log(`\nWrote ${posts.length} wechat posts to ${META_FILE} + ${BODIES_DIR} (total posts=${all.length})`);
   } else {
     console.log(`\n(dry-run) staged ${posts.length} posts; assets downloads=${assets.downloads} skipped=${assets.skipped}`);
   }
