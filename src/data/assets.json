@@ -35,5 +35,13 @@
     "/wp-includes/js/jquery/jquery-migrate.min.js",
     "/wp-includes/js/jquery/jquery.min.js",
     "/wp-includes/js/jquery/ui/core.min.js"
+  ],
+  "blogCss": [
+    "/wp-content/plugins/sydney-toolbox/css/styles.min.css",
+    "/wp-content/plugins/wxsync/libs/wxsync.css",
+    "/wp-content/themes/sydney/css/bootstrap/bootstrap.min.css",
+    "/wp-content/themes/sydney/css/components/elementor.min.css",
+    "/wp-content/themes/sydney/css/styles.min.css",
+    "/wp-content/themes/sydney/style.css"
   ]
 }

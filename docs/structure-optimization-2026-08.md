@@ -1,7 +1,7 @@
 # 项目结构全面审计与优化方案（2026-08）
 
 > 生成日期：2026-08-27 · 仓库：`zjhncbx/zjhncbx.github.io` · 基线 commit：`a68d051`（新闻列表分页 + 年份侧栏上线后）
-> 性质：只读审计 + 方案设计；**批次①②③ 已实施完毕**（①见 `docs/orphans-2026-08.md`，②③见文中 ✅ 注记），批次④⑤待排期。
+> 性质：只读审计 + 方案设计；**批次①②③④ 已实施完毕**（①见 `docs/orphans-2026-08.md`，②③④见文中 ✅ 注记），批次⑤待选型。
 
 ---
 
@@ -66,23 +66,26 @@ Pages 站点软上限 1GB、仓库软上限 1GB、带宽 100GB/月；每导入�
 
 ### P1 前端性能
 
-#### P1-1 全量 CSS/JS 无差别下发
+#### P1-1 全量 CSS/JS 无差别下发 ✅（批次④已执行 2026-08-27，CSS 部分）
 每页固定 21 CSS + 12 JS ≈ **0.85MB（未压缩）**。文章/列表页不需要 Elementor、Swiper；栏目页不需要 blog widget 样式。`livepages` 已有 per-page `css` 增量清单，缺的是反向的**按模板裁剪**。
 
 **方案**：`assets.json` 按组拆：`core`（bootstrap/sydney/jquery）+ `elementor` + `home` + `blog`；BaseLayout 接收 `assetGroups` prop。预期列表/文章页省 300–500KB 传输。
+> **执行注记**：采用最小改动版——`assets.json` 新增 `blogCss`（6 文件 ≈77KB，即 WP 原站在博客模板实际下发的清单，取自批次①前的 `livepages.blog.css` 快照）；BaseLayout 加 `cssScope?: 'global'|'blog'`，`BlogArchive`/`[id]` 传 `blog`。**裁剪安全性双重实证**：240 篇正文 + 博客壳片段 0 处 `elementor-*`/`wp-block`/`fa-*`/`eicon-`/`swiper` 类；主题全局 `img{max-width:100%;height:auto}` 已确认存在。21→7 个 stylesheet 链接（含 inline.css），非博客页零变化。**未做**：JS 按模板分组——脚本内嵌在抓取片段（home_footer 10 个 / 栏目 body 各 8 个）里，拆组需重写片段本体，风险/收益不划算，留待片段 HTML 化时处理。
 
 #### P1-2 BaseLayout 6KB `<style>` 逐页内联 ✅（批次①已执行）
 297 页重复 ≈ 1.8MB 冗余字节且无法跨页缓存；首页另有 1.5KB 同类内联。
 **方案**：并入 `public/assets/inline.css`（或新建 `site-overrides.css`），删除各页 `<style is:inline>` 全局规则（保留真正 per-page 的）。
 > 执行注记：BaseLayout 全局块（5,993B）已原样追加至 `inline.css` 末尾（层叠顺序不变）；首页专属样式保留内联。回归验证：首页/文章页/列表页与旧构建**逐字节一致**（仅少了 style 块）。
 
-#### P1-3 列表缩略图回退引用全尺寸原图
+#### P1-3 列表缩略图回退引用全尺寸原图 ✅（批次④已执行 2026-08-27）
 `ResponsiveImage` 的 `<img src={p.thumb}>` 回退指向原图 → prune 必须保留 127 张全尺寸封面（**9MB 进 dist**），且不支持 WebP 的浏览器在列表页会下载全尺寸图。另：`-480.webp` 生成正则不含 `.gif`，gif 封面（如 2.5MB 的 `21620459622.gif`）在列表页直接播原图。
 **方案**：`make-thumbnails.mjs` 同步产出 `-480.jpg`（含 gif 静帧），`BlogArchive` 回退 `src` 用 `-480.jpg`；预计 dist 再省 ~7MB。
+> **执行注记**：125 张封面的 `-480.jpg` 已生成（`images:thumbs` 双孪生）；`BlogArchive` 经 `thumbVariants()`（`lib/image.ts`）输出 `-480.webp`+`-480.jpg` 并按 sidecar 注入**真实纵横比**（原硬编码 480×300 导致占位框失真）；文章页题图改 Option C 直发全尺寸 `.webp`。审计孪生扩展与 prune 均已认识 `-480.jpg`。**偏差**：「dist 再省 7MB」未兑现——`og:image` 有意保留原图绝对 URL（微信/QQ 爬虫对 webp 预览兼容性不稳，且社交卡片需要分辨率）；原图仍被 prune 保留。换来的是列表页每张封面 300KB–1.4MB → ≈32KB、gif 封面（实为正文图，封面数据里 0 张）问题不存在。dist 净 +2.6MB（125 个 -480.jpg）。
 
-#### P1-4 正文懒加载图无显式尺寸 → CLS
+#### P1-4 正文懒加载图无显式尺寸 → CLS ✅（批次④已执行 2026-08-27）
 `image.ts` 的 lazy 注入不带 width/height（文章页 40+ 张 lazy 图）。
 **方案**：`images:optimize` 生成 `uploads/_sizes.json` sidecar（sharp metadata 一次采集），`image.ts` 注入 `width/height`；同时给 `hm.baidu.com` 加 `preconnect`。
+> **执行注记**：sidecar 落位 `src/data/image-sizes.json`（新 `images:sizes` 命令；2889 stems/190KB，键为去扩展名相对路径，天然兼容 `.webp` 孪生与 `-480` 变体）。`imagePipeline` 新序：webp 替换 → **尺寸注入**（仅缺 width/height 的 uploads `<img>`，115 张自带尺寸不覆盖）→ lazy。实测文章页 2822 全部 41/41 张 `<img>` 带尺寸；首页 elementor 头像/团队 logo 一并受益。preconnect 已加（全站唯一非预期 diff 行，contact/team 逐行核过仅 +1 行）。主题已有 `img{max-width:100%;height:auto}` 全局保护，属性仅供纵横比盒，无变形风险。
 
 ### P2 可维护性
 
@@ -114,7 +117,7 @@ Pages 站点软上限 1GB、仓库软上限 1GB、带宽 100GB/月；每导入�
 | ① 快赢（半天）✅ **已执行 2026-08-27** | P0-2.1/2 删孤儿+未引用资源+死数据键；P1-2 内联 CSS 外置；P2-3/5/6(engines) | 低 | **实测**：public -10.9MB（684→674）、164 文件；数据 JSON -101KB；每页 HTML -6KB 且可缓存；回归逐字节一致 |
 | ② 数据层（1 天） ✅ **已执行 2026-08-27** | P0-1 posts 拆分 + 死字段清理 + 导入脚本适配 | 中（全链路回归） | **实测**：常驻构建 JSON 12.6→0.5MB；meta 241KB + 正文 240 文件；livepages 再 -187KB；9 代表页逐字节回归一致 |
 | ③ 代码收敛（半天） ✅ **已执行 2026-08-27（与②同批）** | P2-1/2/4 完成；P2-6 余 eslint（可选，未引入） | 低 | 三页合一（净 -2 文件）、日期/摘要归一、prune 前缀二分判定（1130删/99留 与旧逻辑完全一致） |
-| ④ 性能分层（1 天） | P1-1 按模板 CSS/JS、P1-3 回退缩略、P1-4 CLS | 中 | 文章/列表页首传 -300–500KB，CLS 达标 |
+| ④ 性能分层（1 天） ✅ **已执行 2026-08-27** | P1-1(CSS 部分)/P1-3/P1-4 完成；P1-1 的 JS 分组与 P3-2 图片 srcset 待后续 | 中 | **实测**：博客面 stylesheet 21→7（-323KB 未压缩/页）；列表封面 300KB–1.4MB→≈32KB；正文 100% `<img>` 带尺寸（CLS）；preconnect 就位；295 页不减、非博客页仅差 preconnect 一行 |
 | ⑤ 战略（评审后） | P0-2.3 媒体 CDN/LFS、~~P3-1 Actions 触发~~（已恢复正常，b0ac2ed 起 push 自动部署）、P3-3 RSS | 高（外部依赖） | 解除 1GB 天花板，CI 分钟级 |
 
 > **初稿「批次① dist -170MB±」的修正**：该估算基于误判的孤儿集（见 P0-2 更正注记）。uploads 体积几乎全属在用/归档设计内，快赢清理的真实收益是 framework 10MB + 每页字节与请求卫生；**发布体积的数量级下降只能依赖批次⑤媒体外迁**。
@@ -123,13 +126,15 @@ Pages 站点软上限 1GB、仓库软上限 1GB、带宽 100GB/月；每导入�
 
 ## 4. 量化收益汇总
 
-| 指标 | 现状（基线 a68d051） | 批次①后 | 批次②③后（实测） | 完成④后（目标） |
+| 指标 | 现状（基线 a68d051） | 批次①后 | 批次②③后 | 批次④后（实测） |
 | --- | ---: | ---: | ---: | ---: |
-| public / dist（发布） | 684MB / ~295MB | **674MB / 290MB** | 674MB / 290MB（dist 不变，属批次⑤范畴） | 674MB / ~285MB |
+| public / dist（发布） | 684MB / ~295MB | **674MB / 290MB** | 674MB / 290MB | 674MB(+2.6MB 新孪生) / **297.3MB**（og 留原图，见 P1-3 注记） |
 | 每页 HTML 重复内联 CSS | 6KB × 295 | **0**（入 inline.css） | 0 | 0 |
-| 每页固定 CSS+JS | ~0.85MB | ~0.85MB | ~0.85MB | 列表/文章 ~0.4MB |
-| 常驻构建输入 JSON | 12.6MB | 12.45MB | **~0.5MB（meta 层，正文按需）** | ~0.5MB |
-| 孤儿/死资源残留 | uploads 19 + fw 145 + 死键 101KB | **0** | 0（livepages 再清死键 -187KB，`images:orphans` 复核 0） | 0 |
-| 新增一篇文章的 git diff | 重写 12MB 行 | 不变 | **~50KB 新文件（posts/<id>.html）+ meta 追加** | 同左 |
+| 每页固定 CSS | ~0.40MB（21 文件） | ~0.40MB | ~0.40MB | **博客面 77KB（6 文件）**；栏目/首页不变 |
+| 列表页封面传输 | 300KB–1.4MB/张 | 同左 | 同左 | **≈32KB/张（-480 孪生）** |
+| 正文 `<img>` 尺寸标注 | 3% (115/3715) | 同左 | 同左 | **100%（sidecar 注入）** |
+| 常驻构建输入 JSON | 12.6MB | 12.45MB | **~0.5MB** | ~0.7MB（+sizes 190KB） |
+| 孤儿/死资源残留 | uploads 19 + fw 145 + 死键 101KB | **0** | 0 | 0（`images:orphans` 复核 0，孪生扩展已含 -480.jpg） |
+| 新增一篇文章的 git diff | 重写 12MB 行 | 不变 | **~50KB 新文件（posts/<id>.html）+ meta 追加** | 同左（另需 images:thumbs/sizes 增量） |
 
 发布体积的数量级下降（290MB → <20MB）属**批次⑤（媒体外迁）**范畴，快赢与代码层优化无法替代。

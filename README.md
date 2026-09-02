@@ -22,9 +22,10 @@ npm run preview        # 预览构建产物
 npm run images:audit     # 只读统计
 npm run images:optimize  # 静态 jpg/png -> webp 副本
 npm run images:gif       # 动态 gif -> 动画 webp 副本
-npm run images:thumbs    # 新闻列表缩略图 480px
+npm run images:thumbs    # 新闻列表缩略图 480px 孪生（-480.webp + -480.jpg 回退）
+npm run images:sizes     # 生成正文图片尺寸 sidecar（src/data/image-sizes.json，防 CLS）
 npm run images:report    # 前后对比
-npm run images:orphans   # 孤儿/未引用资源审计（加 --delete 才删除；每次导入文章后建议跑一遍）
+npm run images:orphans   # 孤儿/未引用资源审计（加 --delete 才删除；每次导入文章后建议跑一遍 thumbs→sizes→orphans）
 
 # 微信公众号历史文章迁移（--all / --article N / --resume / --dry-run）
 npm run wechat:import    # node scripts/import-wechat-articles.mjs --all
@@ -43,10 +44,14 @@ npm run wechat:import    # node scripts/import-wechat-articles.mjs --all
 - `src/pages/sitemap.xml.ts`：根据实际路由自动生成的 XML sitemap（含文章 lastmod）。
 - `public/robots.txt`：允许全站抓取，sitemap 指向 canonical 域名。
 - `public/404.html`：统一视觉的 404 页，含返回首页入口。
-- `src/lib/image.ts`：图片渲染管线——为正文大图追加 `loading="lazy"`、并用 `<picture>` 优先加载 WebP（首屏 Hero / Logo 保持 eager），历史原图 URL 作为回退保留。
+- `src/lib/image.ts`：图片渲染管线——正文 `<img>` 先 `<picture>` 优先加载 WebP（首屏 Hero / Logo 保持 eager，历史原图 URL 回退保留；批次④起 og:image 仍用原图以兼容社交爬虫），再从 `src/data/image-sizes.json` sidecar 注入缺失的 `width/height`（防懒加载 CLS），最后追加 `loading="lazy" decoding="async"`。
 
-## 响应式与前端性能（P2）
+## 响应式与前端性能（P2 / 批次④）
 
+- **CSS 按模板分层**：博客列表与文章页（264 页）经 BaseLayout 的 `cssScope="blog"` 只加载 WP 原站验证过的 6 个主题文件（约 77KB），不再加载 Elementor / Swiper / FontAwesome / google-fonts 等 15 个仅栏目页/首页需要的文件（约 323KB 未压缩）——依据是 `livepages.blog.css` 历史快照 + 全站 body 类名扫描（正文 0 处 elementor/wp-block/fa 类）。`assets.json` 的 `blogCss` 为单一清单。
+- **列表缩略图三元组**：`<picture>` = `-480.webp` + `-480.jpg` 回退（批次④起 `images:thumbs` 同时产出两种 480px 孪生；旧行为 `<img>` 直接引用全尺寸原图，列表页每张 300KB–1.4MB），宽高按图片真实纵横比注入（sidecar），不再硬编码 480×300。
+- **文章页题图 Option C**：存在全尺寸 WebP 孪生时直接加载 `.webp`（约省 55%），并注入真实尺寸。
+- `hm.baidu.com` preconnect（分析脚本握手提前）。JS 仍内嵌于抓取片段（home_footer / shell / 栏目 body），按模板拆组需改写片段本体，留待后续。
 - `src/components/ResponsiveImage.astro`：统一图片组件，输出 `<picture>`（WebP）+ 原图回退，支持 `loading`/`decoding`/`fetchpriority`/`width`/`height`/自定义 `webpSrc`。
 - 全局布局覆盖样式统一放在 `public/assets/inline.css`（批次①起；此前由 BaseLayout 以 `<style>` 逐页重复输出约 6KB×295 页，现外置可缓存）。
 - 字体资源只保留现役 `@font-face` 实际使用的 woff2/woff 与现代图片格式；legacy eot/ttf/otf 与字体目录内 svg（IE 时代回退）已从仓库移除。
@@ -118,9 +123,9 @@ npm run wechat:import    # node scripts/import-wechat-articles.mjs --all
 
 - `src/pages/`：页面（首页、博客列表 `[...slug]` 与文章 `[id]`、`[page]` 静态栏目页 = 团队/服务/联系）及 `sitemap.xml.ts`
 - `src/components/`：SEO 组件、`ResponsiveImage.astro` 统一图片组件、`BlogArchive.astro` 新闻列表组件
-- `src/lib/`：图片渲染管线（lazy + webp picture）、`blog.ts`（列表分页/年份归档、正文按需加载）等工具函数
+- `src/lib/`：图片渲染管线（webp picture + 尺寸注入 + lazy）、`blog.ts`（列表分页/年份归档、正文按需加载）等工具函数
 - `src/consts.ts`：全站正式域名（单一来源，供 canonical / og / sitemap / astro.config 复用）
-- `src/data/`：WordPress 导出数据——`posts.meta.json`（文章元数据 + 预生成摘要）、`posts/<id>.html`（正文）、`livepages.json`（栏目页快照）、`render_blocks.json`（首页块）、`staticPages.ts`（栏目页文案）、`organization.ts`
+- `src/data/`：WordPress 导出数据——`posts.meta.json`（文章元数据 + 预生成摘要）、`posts/<id>.html`（正文）、`livepages.json`（栏目页快照）、`render_blocks.json`（首页块）、`staticPages.ts`（栏目页文案）、`image-sizes.json`（图片尺寸 sidecar）、`organization.ts`
 - `scripts/`：图片审计 / 优化 / 缩略图脚本，`audit-orphans.mjs`（孤儿与死资源审计/删除），`split-posts.mjs`（批次② 一次性数据拆分），`prune-dist.mjs`（发布瘦身），`import-wechat-articles.mjs`（微信文章导入）
 - `public/`：静态资源（Sydney/Elementor 样式、字体、图片与下载文件，含 404 / robots / 验证文件）
 

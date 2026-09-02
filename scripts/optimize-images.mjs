@@ -134,6 +134,29 @@ async function gifOptimize() {
   console.log("before MB:", Math.round(before / 1048576), "after MB:", Math.round(after / 1048576), "saved MB:", Math.round((before - after) / 1048576), "ratio:", Math.round((1 - after / before) * 100) + "%");
 }
 
+// batch ④ (P1-4): collect natural pixel dimensions of every uploads image into a
+// build-time sidecar src/data/image-sizes.json, keyed by extension-less relative
+// path (so a webp twin, its original, and -480 variants share/own correct boxes).
+// The render pipeline (src/lib/image.ts) injects width/height from this map to
+// prevent layout shift on lazy-loaded body images.
+async function sizes() {
+  const files = walk("public/wp-content/uploads").filter((p) => /\.(jpe?g|png|gif|webp)$/i.test(p));
+  const map = {};
+  let done = 0, failed = 0;
+  for (const p of files) {
+    try {
+      const md = await sharp(p, { animated: false }).metadata();
+      if (!md.width || !md.height) { failed++; continue; }
+      const rel = p.replace(/^public\/wp-content\/uploads\//, "").replace(/\\/g, "/");
+      const stem = rel.replace(/\.(jpe?g|png|gif|webp)$/i, "");
+      if (!(stem in map)) map[stem] = [md.width, md.height];
+      done++;
+    } catch { failed++; }
+  }
+  fs.writeFileSync("src/data/image-sizes.json", JSON.stringify(map));
+  console.log("sizes sidecar: stems", Object.keys(map).length, "| read", done, "| failed", failed, "| bytes", fs.statSync("src/data/image-sizes.json").size);
+}
+
 function report() {
   const before = walk("public/wp-content/uploads").filter((p) => /\.(jpe?g|png)$/i.test(p));
   let origBytes = 0, webpBytes = 0, webpCount = 0;
@@ -151,6 +174,7 @@ function report() {
   if (CMD === "audit") await audit();
   else if (CMD === "optimize") await optimize();
   else if (CMD === "gif-optimize") await gifOptimize();
+  else if (CMD === "sizes") await sizes();
   else if (CMD === "report") report();
-  else console.log("usage: optimize-images.mjs <audit|optimize|gif-optimize|report>");
+  else console.log("usage: optimize-images.mjs <audit|optimize|gif-optimize|sizes|report>");
 })();

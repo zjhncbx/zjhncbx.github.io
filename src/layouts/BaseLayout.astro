@@ -9,6 +9,9 @@ interface Props {
   description?: string;
   styles?: string[];
   bodyClass?: string;
+  /** CSS bundle scope (batch ④): 'blog' ships only the theme files the blog
+   *  template actually needs (6 files ≈77KB) instead of the full 21 ≈400KB. */
+  cssScope?: 'global' | 'blog';
   seo?: {
     title?: string;
     description?: string;
@@ -28,8 +31,11 @@ const {
   description = '海宁市潮百相公益发展协会官网',
   styles = [],
   bodyClass = '',
+  cssScope = 'global',
   seo = {},
 } = Astro.props;
+
+const cssList = cssScope === 'blog' ? assets.blogCss : assets.css;
 ---
 
 <!DOCTYPE html>
@@ -37,6 +43,7 @@ const {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preconnect" href="https://hm.baidu.com" />
     <SEO
       title={seo.title ?? title}
       description={seo.description ?? description}
@@ -50,7 +57,7 @@ const {
       website={seo.website}
     />
     <link rel="icon" type="image/jpeg" href="/wp-content/uploads/2020/10/加字圆形logo.jpg" />
-    {assets.css.map((href) => (
+    {cssList.map((href) => (
       <link rel="stylesheet" href={href} />
     ))}
     {styles.map((href) => (

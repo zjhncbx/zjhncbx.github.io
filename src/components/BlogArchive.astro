@@ -17,6 +17,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import livepages from '../data/livepages.json';
 import ResponsiveImage from './ResponsiveImage.astro';
+import { thumbVariants } from '../lib/image';
 import { fmtDate } from '../lib/blog';
 
 interface Props {
@@ -93,6 +94,7 @@ function pageItems(current: number, total: number): (number | '…')[] {
 <BaseLayout
   title={pageTitle}
   description={pageDescription}
+  cssScope="blog"
   seo={{ title: pageTitle, description: pageDescription, canonical: canonical() }}
 >
   <Fragment set:html={shell.header} />
@@ -103,19 +105,23 @@ function pageItems(current: number, total: number): (number | '…')[] {
           <main id="main" class="post-wrap" role="main">
             <div class="posts-layout">
               <div class="row">
-                {posts.map((p) => (
+                {posts.map((p) => {
+                  // batch ④: list thumbs render as -480.webp/-480.jpg twins (never the
+                  // full-size original) with intrinsic dimensions from the sidecar.
+                  const tv = p.thumb ? thumbVariants(p.thumb) : undefined;
+                  return (
                   <article class="post col-md-12 post-align-left">
                     <div class="content-inner">
-                      {p.thumb && (
+                      {tv && (
                         <div class="post-thumbnail">
                           <a href={`/blog/${p.id}/`}>
                             <ResponsiveImage
-                              src={p.thumb}
+                              src={tv.src}
                               alt={p.title}
-                              width={480}
-                              height={300}
+                              width={tv.width}
+                              height={tv.height}
                               loading="lazy"
-                              webpSrc={p.thumb.replace(/\.(jpe?g|png)$/i, '-480.webp')}
+                              webpSrc={tv.webp}
                             />
                           </a>
                         </div>
@@ -138,7 +144,8 @@ function pageItems(current: number, total: number): (number | '…')[] {
                       </div>
                     </div>
                   </article>
-                ))}
+                  );
+                })}
               </div>
             </div>
 

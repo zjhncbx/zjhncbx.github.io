@@ -3,7 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import livepages from '../../data/livepages.json';
 import postsMeta from '../../data/posts.meta.json';
 import { fmtDate, isoDate, loadPostBody } from '../../lib/blog';
-import { imagePipeline } from '../../lib/image';
+import { imagePipeline, webpTwinUrl, imageSize } from '../../lib/image';
 import { SITE } from '../../consts';
 
 export function getStaticPaths() {
@@ -18,6 +18,11 @@ const content = post ? await loadPostBody(String(post.id)) : '';
 
 // first image url in content for og:image (prefer the post thumbnail when present)
 const firstImage = post && (post.thumb || (/src="([^"]+)"/.exec(content) || [])[1]);
+// batch ④: the header thumbnail serves the full-size .webp twin when one exists
+// (Option C, like body images) with intrinsic dims from the sidecar to stop CLS;
+// og:image keeps the classic URL for social crawlers.
+const thumbUrl = post?.thumb ? webpTwinUrl(post.thumb) : '';
+const thumbDims = thumbUrl ? imageSize(thumbUrl) : undefined;
 const base = SITE;
 const canonical = post ? `${base}/blog/${post.id}/` : base;
 const ogImage = firstImage ? (firstImage.startsWith('http') ? firstImage : base + firstImage) : undefined;
@@ -26,6 +31,7 @@ const ogImage = firstImage ? (firstImage.startsWith('http') ? firstImage : base 
 <BaseLayout
   title={`${post?.title ?? '文章'} | 潮百相公益——兴趣公益与社会创新的领导者`}
   description={post?.desc ?? ''}
+  cssScope="blog"
   seo={{
     title: `${post?.title ?? '文章'} | 潮百相公益——兴趣公益与社会创新的领导者`,
     description: post?.desc ?? '',
@@ -45,9 +51,9 @@ const ogImage = firstImage ? (firstImage.startsWith('http') ? firstImage : base 
           <main id="main" class="post-wrap" role="main">
             <article id={`post-${post?.id}`} class="post type-post status-publish post-align-left">
               <div class="content-inner">
-                {post && post.thumb && (
+                {thumbUrl && (
                   <div class="post-thumbnail">
-                    <img src={post.thumb} alt={post.title} />
+                    <img src={thumbUrl} alt={post!.title} width={thumbDims?.[0]} height={thumbDims?.[1]} />
                   </div>
                 )}
                 <div class="entry-meta above-title delimiter-dot">

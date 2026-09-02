@@ -12,6 +12,7 @@
     "check": "astro check",
     "images:audit": "node scripts/optimize-images.mjs audit",
     "images:optimize": "node scripts/optimize-images.mjs optimize",
+    "images:sizes": "node scripts/optimize-images.mjs sizes",
     "images:gif": "node scripts/optimize-images.mjs gif-optimize",
     "images:thumbs": "node scripts/make-thumbnails.mjs",
     "images:report": "node scripts/optimize-images.mjs report",

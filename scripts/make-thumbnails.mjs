@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// make-thumbnails.mjs — generate a ~480px wide WebP thumbnail twin next to each featured thumb.
-// Keeps the original; only writes <stem>-480.webp. Used by the news list <picture>.
+// make-thumbnails.mjs — generate ~480px thumbnail twins (<stem>-480.webp + <stem>-480.jpg)
+// next to each featured thumb. Keeps the original. Used by the news list <picture>
+// (webp preferred, jpeg fallback — so the full-size original never goes to the list page).
 import sharp from "sharp";
 import fs from "fs";
 import path from "path";
@@ -14,17 +15,24 @@ for (const p of posts) {
   const m = /\/wp-content\/uploads\/([^?"\s]+)/.exec(p.thumb);
   if (m) thumbs.add(m[1]);
 }
-let made = 0, skipped = 0;
+// batch ④: also emit <stem>-480.jpg so the news-list <picture> can fall back to a
+// SMALL jpeg instead of the full-size original (which forced prune to keep every
+// featured-image original in the published dist).
+let madeWebp = 0, madeJpg = 0, skipped = 0;
 for (const rel of thumbs) {
   const abs = path.join(root, "public", "wp-content", "uploads", rel.replace(/\//g, path.sep));
   if (!fs.existsSync(abs)) { skipped++; continue; }
   const stem = abs.replace(/\.(jpe?g|png|gif)$/i, "");
-  const out = stem + "-480.webp";
-  if (fs.existsSync(out)) { made++; continue; }
-  try {
-    const buf = await sharp(abs, { animated: false }).rotate().resize({ width: 480, withoutEnlargement: true }).webp({ quality: 78 }).toBuffer();
-    fs.writeFileSync(out, buf);
-    made++;
-  } catch (e) { skipped++; }
+  for (const [suffix, kind] of [["-480.webp", "webp"], ["-480.jpg", "jpg"]]) {
+    const out = stem + suffix;
+    if (fs.existsSync(out)) { kind === "webp" ? madeWebp++ : madeJpg++; continue; }
+    try {
+      let img = sharp(abs, { animated: false }).rotate().resize({ width: 480, withoutEnlargement: true });
+      if (kind === "jpg") img = img.flatten({ background: "#ffffff" }).jpeg({ quality: 78 });
+      else img = img.webp({ quality: 78 });
+      fs.writeFileSync(out, await img.toBuffer());
+      kind === "webp" ? madeWebp++ : madeJpg++;
+    } catch (e) { skipped++; }
+  }
 }
-console.log("thumb webp twins written:", made, "skipped:", skipped);
+console.log("thumb twins — webp:", madeWebp, "jpg:", madeJpg, "skipped:", skipped);

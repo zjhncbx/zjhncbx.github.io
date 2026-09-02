@@ -4,7 +4,7 @@
  *
  * Two categories:
  *   1. uploads   : public/wp-content/uploads files that no source-of-truth text references,
- *                  directly or via their generated WebP twins (<stem>.webp / <stem>-480.webp).
+ *                  directly or via their generated WebP twins (<stem>.webp / <stem>-480.webp / <stem>-480.jpg).
  *   2. framework : public/wp-content/{plugins,themes} + public/wp-includes files not needed by
  *                  the asset closure (assets.json + embedded <link>/<script> in captured HTML),
  *                  expanded transitively through CSS url()/@import and conservative basename
@@ -92,6 +92,7 @@ for (const tok of refTokens) {
   uploadKeep.add(rel);
   uploadKeep.add(rel.replace(/\.(jpe?g|png|gif)$/i, '.webp'));
   uploadKeep.add(rel.replace(/\.(jpe?g|png|gif)$/i, '-480.webp'));
+  uploadKeep.add(rel.replace(/\.(jpe?g|png|gif)$/i, '-480.jpg')); // batch ④ jpeg fallback twin
   // if source references a .webp directly, keep its original too (fallback/archive)
   uploadKeep.add(rel.replace(/\.webp$/i, '.jpg'));
   uploadKeep.add(rel.replace(/\.webp$/i, '.jpeg'));
