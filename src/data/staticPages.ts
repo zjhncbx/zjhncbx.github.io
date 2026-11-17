@@ -12,7 +12,7 @@ export interface StaticPageCopy {
 export const STATIC_PAGES: Record<string, StaticPageCopy> = {
   team: {
     title: '团队介绍 | 潮百相公益——兴趣公益与社会创新的领导者',
-    description: '海宁市潮百相公益发展协会团队介绍：青宁志愿者联合团、潮人语语言资源团、紫微城记、安澜交通等公益团队。',
+    description: '海宁市潮百相公益发展协会团队介绍：会员大会、理事会、秘书处，下设综合项目部、潮人语项目部、安澜项目部。',
   },
   services: {
     title: '服务项目 | 潮百相公益——兴趣公益与社会创新的领导者',
